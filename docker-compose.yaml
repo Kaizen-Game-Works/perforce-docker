@@ -19,7 +19,7 @@ services:
       P4USER: ${P4_USERNAME}
       P4PASSWD: ${P4_PASSWORD}
       P4D_USE_UNICODE: 'true'
-      P4D_LOAD_TYPEMAPS: 'false'
+      P4D_LOAD_TYPEMAPS: 'true'
       P4D_LOAD_USERS: 'false'
       P4D_LOAD_USER_PASSWORDS: 'false'
       P4D_LOAD_GROUPS: 'false'

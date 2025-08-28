@@ -1,6 +1,10 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![ci](https://github.com/hawkmoth-studio/perforce-docker/workflows/ci/badge.svg)](https://github.com/hawkmoth-studio/perforce-docker/actions)
 
+# IMPORTANT
+The docker-compose file has been modified to use a .env file in order to provide
+usernames and passwords. See the top of the docker-compose.yaml file for details
+
 # perforce-docker
 Docker images for Perforce source control.
 

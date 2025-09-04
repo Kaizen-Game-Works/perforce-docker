@@ -1,11 +1,6 @@
 # Remember to setup a .env alongside this file
 # that provides the values for MYSQL_ROOT_PASSWORD 
-# and others. The format is:
-# P4_USERNAME=myadminuser
-# P4_PASSWORD=myadminpassword
-# SWARM_USER_NAME=myswarmuser
-# SWARM_PASSWORD=myswarmpassword
-# SWARM_TRIGGER_TOKEN=mytriggertoken
+# and others. Look at the sample.env to get started
 
 
 version: '2.1'

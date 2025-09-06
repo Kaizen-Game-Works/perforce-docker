@@ -17,6 +17,18 @@ Edit the new .env file to contain the details for the setup
 vi .env
 ```
 
+Make the backup script executable
+```bash
+cd utils/backup
+chmod +x p4_backup.sh
+chmod +x schedule_backup.sh
+```
+
+And now run schedule backups to choose a time to perform the P4 backups
+```bash
+./schedule_backup
+```
+
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
 
 # perforce-docker

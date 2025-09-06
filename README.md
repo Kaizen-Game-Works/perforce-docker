@@ -1,9 +1,23 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![ci](https://github.com/hawkmoth-studio/perforce-docker/workflows/ci/badge.svg)](https://github.com/hawkmoth-studio/perforce-docker/actions)
 
-# IMPORTANT
+# KAIZEN CHANGES
 The docker-compose file has been modified to use a .env file in order to provide
-usernames and passwords. See the top of the docker-compose.yaml file for details
+usernames and passwords. See docker-compose.yaml and sample.env for details
+
+## Additional Setup
+Make the .env file
+```bash
+cp sample.env .env
+chmod 600 .env
+```
+
+Edit the new .env file to contain the details for the setup
+```bash
+vi .env
+```
+
+Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
 
 # perforce-docker
 Docker images for Perforce source control.

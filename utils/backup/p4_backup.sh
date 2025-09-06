@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-# Load secrets file
-. ../../.env
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load secrets file (assumes .env is in folders above dir holding this the script, adjust if needed)
+. "$SCRIPT_DIR/../../.env"
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 BACKUP_DIR="/opt/p4data/p4d_backup/$TIMESTAMP"

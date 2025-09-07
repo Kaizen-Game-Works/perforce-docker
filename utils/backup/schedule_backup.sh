@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Path to your backup script
-BACKUP_SCRIPT="/opt/p4data/p4d_backup/p4_backup.sh"
+BACKUP_SCRIPT="/opt/perforce/utils/backup/p4_backup.sh"
 LOGFILE="/opt/p4data/p4d_backup_logs/cron.log"
 
 # Make sure the script is executable

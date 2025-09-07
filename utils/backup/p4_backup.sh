@@ -85,10 +85,20 @@ log_and_alert() {
     META_DIR="$BACKUP_DIR/metadata"
     mkdir -p "$META_DIR"
 
-    # --- Copy checkpoint, journals, license, server.id into META_DIR ---
-    for item in checkpoint.* journal.* license server.id; do
-        if docker exec "$P4D_DOCKER_INSTANCE" test -e "/data/$item"; then
-            docker cp "$P4D_DOCKER_INSTANCE:/data/$item" "$META_DIR/"
+    # Copy checkpoint files
+    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c 'ls /data/checkpoint.* 2>/dev/null'); do
+        docker cp "$P4D_DOCKER_INSTANCE:$file" "$META_DIR/"
+    done
+
+    # Copy journal files
+    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c 'ls /data/journal.* 2>/dev/null'); do
+        docker cp "$P4D_DOCKER_INSTANCE:$file" "$META_DIR/"
+    done
+
+    # Copy license and server.id if they exist
+    for file in license server.id; do
+        if docker exec "$P4D_DOCKER_INSTANCE" test -e "/data/$file"; then
+            docker cp "$P4D_DOCKER_INSTANCE:/data/$file" "$META_DIR/"
         fi
     done
 

@@ -108,16 +108,31 @@ log_and_alert() {
 
     echo "$(date) - Backup files copied to $BACKUP_DIR"
 
-    # --- Verify checkpoint(s) ---
-    for file in "$BACKUP_DIR"/checkpoint.* "$BACKUP_DIR"/journal.*; do
+    # --- Verify checkpoint ---
+    for file in "$META_DIR"/checkpoint.*; do
         [[ -f "$file" ]] || continue
-        if docker exec -i "$P4D_DOCKER_INSTANCE" p4d -r /data -jv < "$file"; then
-            log_and_alert "SUCCESS" "✅ Perforce Verified $file on $(hostname) at $(date)"
+        [[ "$file" == *.md5 ]] && continue # Skip .md5 files
+        basename=$(basename "$file")
+        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
+            log_and_alert "SUCCESS" "✅ Perforce Verified checkpoint $file on $(hostname) at $(date)"
         else
-            log_and_alert "FAILURE" "❌ Perforce Verification failed for $file on $(hostname) at $(date)" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Verification failed for checkpoint $file on $(hostname) at $(date)" "CRITICAL"
             exit 1
         fi
     done
+
+    # --- Verify Journals ---
+    for file in "$META_DIR"/journal.*; do
+        [[ -f "$file" ]] || continue
+        basename=$(basename "$file")
+        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
+            log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)"
+        else
+            log_and_alert "FAILURE" "❌ Perforce Verification failed for journal $file on $(hostname) at $(date)" "CRITICAL"
+            exit 1
+        fi
+    done
+
 
     # --- Upload to S3 ---
     if [[ "${S3_ENABLED:-false}" == "true" && -n "${S3_BUCKET:-}" ]]; then

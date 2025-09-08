@@ -21,10 +21,14 @@ mkdir -p "$BACKUP_DIR"
 # --- Logging helpers ---
 post_to_slack() {
     local msg="$1"
-    if [[ "${SLACK_ENABLED:-false}" == "true" && -n "${SLACK_WEBHOOK:-}" ]]; then
-        curl -s -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$msg\"}" \
-            "$SLACK_WEBHOOK" >/dev/null || true
+    if [[ "${SLACK_ENABLED:-false}" == "true" && -n "${SLACK_BOT_TOKEN:-}" ]]; then
+        curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H 'Content-type: application/json; charset=utf-8' \
+            --data "{
+                \"channel\": \"$SLACK_CHANNEL_ID\",
+                \"text\": \"$msg\"
+                }"
     fi
 }
 

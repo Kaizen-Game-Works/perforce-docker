@@ -24,6 +24,19 @@ chmod +x p4_backup.sh
 chmod +x schedule_backup.sh
 ```
 
+Make the verify script executable
+```bash
+cd ../../utils/verify
+chmod +x p4_verify.sh
+chmod +x schedule_verify.sh
+```
+
+Make the logger script executable
+```bash
+cd ../../utils/logger
+chmod +x logger.sh
+```
+
 And now run schedule backups to choose a time to perform the P4 backups
 ```bash
 ./schedule_backup

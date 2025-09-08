@@ -11,6 +11,8 @@ BACKUP_DIR="/opt/p4data/p4d_backup/$TIMESTAMP"
 LOG_DIR="/opt/p4data/p4d_backup_logs"
 LOGFILE="$LOG_DIR/backup_$TIMESTAMP.log"
 
+source $SCRIPT_DIR/../logger/logger.sh
+
 # --- Prune old backup logs, keeping only the last 100 ---
 MAX_LOGS=100
 mkdir -p "$LOG_DIR"
@@ -18,55 +20,6 @@ ls -1tr "$LOG_DIR"/backup_*.log | head -n -"$MAX_LOGS" | xargs -r rm -f
 
 mkdir -p "$BACKUP_DIR"
 
-# --- Logging helpers ---
-post_to_slack() {
-    local msg="$1"
-    if [[ "${SLACK_ENABLED:-false}" == "true" && -n "${SLACK_BOT_TOKEN:-}" ]]; then
-        curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H 'Content-type: application/json; charset=utf-8' \
-            --data "{
-                \"channel\": \"$SLACK_CHANNEL_ID\",
-                \"text\": \"$msg\"
-                }"
-    fi
-}
-
-post_to_newrelic() {
-    local status="$1"
-    local priority="$2"
-    if [[ "${NEWRELIC_ENABLED:-false}" == "true" && -n "${NEWRELIC_API_KEY:-}" && -n "${NEWRELIC_ACCOUNT_ID:-}" ]]; then
-        payload=$(mktemp)
-        cat > "$payload" <<EOF
-[
-  {
-    "eventType": "PerforceBackup",
-    "status": "$status",
-    "host": "$(hostname)",
-    "priority": "$priority"
-  }
-]
-EOF
-        gzip -c "$payload" | \
-        curl -s -X POST \
-             -H "Content-Type: application/json" \
-             -H "Api-Key: $NEWRELIC_API_KEY" \
-             -H "Content-Encoding: gzip" \
-             $NEWRELIC_REGION_SERVER/v1/accounts/$NEWRELIC_ACCOUNT_ID/events \
-             --data-binary @-
-        rm -f "$payload"
-    fi
-}
-
-log_and_alert() {
-    local status="$1"
-    local msg="$2"
-    local priority="${3:-NORMAL}"
-    echo "" >> "$LOGFILE"                 # ensure new log starts on a new line
-    echo "$(date) - $msg" >> "$LOGFILE"
-    post_to_slack "$msg"
-    post_to_newrelic "$status" "$priority"
-}
 
 {
     echo ""
@@ -74,15 +27,15 @@ log_and_alert() {
 
     # --- Check container is running ---
     if ! docker ps --format '{{.Names}}' | grep -q "^${P4D_DOCKER_INSTANCE}$"; then
-        log_and_alert "FAILURE" "❌ Perforce Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
         exit 1
     fi
 
     # --- Run checkpoint inside container ---
     if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc; then
-        log_and_alert "SUCCESS" "✅ Perforce Checkpoint created successfully on $(hostname) at $(date)"
+        log_and_alert "SUCCESS" "✅ Perforce Checkpoint created successfully on $(hostname) at $(date)" "$LOGFILE"
     else
-        log_and_alert "FAILURE" "❌ Perforce Failed to create checkpoint on $(hostname) at $(date)" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Failed to create checkpoint on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
         exit 1
     fi
 
@@ -114,9 +67,9 @@ log_and_alert() {
         [[ "$file" == *.md5 ]] && continue # Skip .md5 files
         basename=$(basename "$file")
         if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
-            log_and_alert "SUCCESS" "✅ Perforce Verified checkpoint $file on $(hostname) at $(date)"
+            log_and_alert "SUCCESS" "✅ Perforce Verified checkpoint $file on $(hostname) at $(date)" "$LOGFILE"
         else
-            log_and_alert "FAILURE" "❌ Perforce Verification failed for checkpoint $file on $(hostname) at $(date)" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Verification failed for checkpoint $file on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
             exit 1
         fi
     done
@@ -126,9 +79,9 @@ log_and_alert() {
         [[ -f "$file" ]] || continue
         basename=$(basename "$file")
         if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
-            log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)"
+            log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)" "$LOGFILE"
         else
-            log_and_alert "FAILURE" "❌ Perforce Verification failed for journal $file on $(hostname) at $(date)" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Verification failed for journal $file on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
             exit 1
         fi
     done
@@ -137,9 +90,9 @@ log_and_alert() {
     # --- Upload to S3 ---
     if [[ "${S3_ENABLED:-false}" == "true" && -n "${S3_BUCKET:-}" ]]; then
         if aws s3 cp "$BACKUP_DIR" "s3://$S3_BUCKET/perforce/$TIMESTAMP/" --recursive; then
-            log_and_alert "SUCCESS" "✅ Perforce Backup uploaded to S3 bucket $S3_BUCKET"
+            log_and_alert "SUCCESS" "✅ Perforce Backup uploaded to S3 bucket $S3_BUCKET" "$LOGFILE"
         else
-            log_and_alert "FAILURE" "❌ Perforce Failed to upload to S3 bucket $S3_BUCKET" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Failed to upload to S3 bucket $S3_BUCKET" "$LOGFILE" "CRITICAL"
             exit 1
         fi
     else
@@ -149,14 +102,14 @@ log_and_alert() {
     # --- Metadata archive ---
     META_ARCHIVE="$BACKUP_DIR/perforce_metadata_$TIMESTAMP.tar.gz"
     tar -czf "$META_ARCHIVE" -C "$META_DIR" . || {
-        log_and_alert "FAILURE" "❌ Perforce Failed to create metadata archive $META_ARCHIVE" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Failed to create metadata archive $META_ARCHIVE" "$LOGFILE" "CRITICAL"
         exit 1
     }
 
     # --- Sync to remote storage ---
     if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" && -n "${SSH_KEY:-}" ]]; then
         if [[ ! -f "$SSH_KEY" ]]; then
-            log_and_alert "FAILURE" "❌ SSH key $SSH_KEY not found, cannot sync metadata" "CRITICAL"
+            log_and_alert "FAILURE" "❌ SSH key $SSH_KEY not found, cannot sync metadata" "$LOGFILE" "CRITICAL"
             exit 1
         fi
 
@@ -172,7 +125,7 @@ log_and_alert() {
         # Rsync local backup directory to remote, mirroring contents
         rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "/opt/p4data/p4d_backup/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
-        log_and_alert "SUCCESS" "✅ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning"
+        log_and_alert "SUCCESS" "✅ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning" "$LOGFILE"
     else
         echo "$(date) - Metadata sync skipped (STORAGE_SERVER/REMOTE_META_DIR/SSH_KEY not set)"
     fi
@@ -181,7 +134,7 @@ log_and_alert() {
     if [[ "${DEPOT_SYNC_ENABLED:-false}" == "true" ]]; then
         if [[ -n "${DEPOTS_DIR:-}" && -n "${STORAGE_SERVER:-}" && -n "${DEPOTS_REMOTE_DIR:-}" && -n "${SSH_KEY:-}" ]]; then
             if [[ ! -f "$SSH_KEY" ]]; then
-                log_and_alert "FAILURE" "❌ SSH key $SSH_KEY not found, cannot sync depots" "CRITICAL"
+                log_and_alert "FAILURE" "❌ SSH key $SSH_KEY not found, cannot sync depots" "$LOGFILE" "CRITICAL"
                 exit 1
             fi
 
@@ -189,9 +142,9 @@ log_and_alert() {
             ssh -p "$SSH_PORT" -i "$SSH_KEY" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
             if rsync -aH --delete --progress -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
-                log_and_alert "SUCCESS" "✅ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR"
+                log_and_alert "SUCCESS" "✅ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
-                log_and_alert "FAILURE" "❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "CRITICAL"
+                log_and_alert "FAILURE" "❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"
                 exit 1
             fi
         else

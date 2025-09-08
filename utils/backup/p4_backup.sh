@@ -74,15 +74,15 @@ log_and_alert() {
 
     # --- Check container is running ---
     if ! docker ps --format '{{.Names}}' | grep -q "^${P4D_DOCKER_INSTANCE}$"; then
-        log_and_alert "FAILURE" "❌ Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "CRITICAL"
         exit 1
     fi
 
     # --- Run checkpoint inside container ---
     if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc; then
-        log_and_alert "SUCCESS" "✅ Checkpoint created successfully on $(hostname) at $(date)"
+        log_and_alert "SUCCESS" "✅ Perforce Checkpoint created successfully on $(hostname) at $(date)"
     else
-        log_and_alert "FAILURE" "❌ Failed to create checkpoint on $(hostname) at $(date)" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Failed to create checkpoint on $(hostname) at $(date)" "CRITICAL"
         exit 1
     fi
 
@@ -112,9 +112,9 @@ log_and_alert() {
     for file in "$BACKUP_DIR"/checkpoint.* "$BACKUP_DIR"/journal.*; do
         [[ -f "$file" ]] || continue
         if docker exec -i "$P4D_DOCKER_INSTANCE" p4d -r /data -jv < "$file"; then
-            log_and_alert "SUCCESS" "✅ Verified $file on $(hostname) at $(date)"
+            log_and_alert "SUCCESS" "✅ Perforce Verified $file on $(hostname) at $(date)"
         else
-            log_and_alert "FAILURE" "❌ Verification failed for $file on $(hostname) at $(date)" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Verification failed for $file on $(hostname) at $(date)" "CRITICAL"
             exit 1
         fi
     done
@@ -122,9 +122,9 @@ log_and_alert() {
     # --- Upload to S3 ---
     if [[ "${S3_ENABLED:-false}" == "true" && -n "${S3_BUCKET:-}" ]]; then
         if aws s3 cp "$BACKUP_DIR" "s3://$S3_BUCKET/perforce/$TIMESTAMP/" --recursive; then
-            log_and_alert "SUCCESS" "✅ Backup uploaded to S3 bucket $S3_BUCKET"
+            log_and_alert "SUCCESS" "✅ Perforce Backup uploaded to S3 bucket $S3_BUCKET"
         else
-            log_and_alert "FAILURE" "❌ Failed to upload to S3 bucket $S3_BUCKET" "CRITICAL"
+            log_and_alert "FAILURE" "❌ Perforce Failed to upload to S3 bucket $S3_BUCKET" "CRITICAL"
             exit 1
         fi
     else
@@ -134,7 +134,7 @@ log_and_alert() {
     # --- Metadata archive ---
     META_ARCHIVE="$BACKUP_DIR/perforce_metadata_$TIMESTAMP.tar.gz"
     tar -czf "$META_ARCHIVE" -C "$META_DIR" . || {
-        log_and_alert "FAILURE" "❌ Failed to create metadata archive $META_ARCHIVE" "CRITICAL"
+        log_and_alert "FAILURE" "❌ Perforce Failed to create metadata archive $META_ARCHIVE" "CRITICAL"
         exit 1
     }
 
@@ -157,7 +157,7 @@ log_and_alert() {
         # Rsync local backup directory to remote, mirroring contents
         rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "/opt/p4data/p4d_backup/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
-        log_and_alert "SUCCESS" "✅ Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning"
+        log_and_alert "SUCCESS" "✅ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning"
     else
         echo "$(date) - Metadata sync skipped (STORAGE_SERVER/REMOTE_META_DIR/SSH_KEY not set)"
     fi
@@ -174,9 +174,9 @@ log_and_alert() {
             ssh -p "$SSH_PORT" -i "$SSH_KEY" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
             if rsync -aH --delete --progress -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
-                log_and_alert "SUCCESS" "✅ Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR"
+                log_and_alert "SUCCESS" "✅ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR"
             else
-                log_and_alert "FAILURE" "❌ Depot rsync to $STORAGE_SERVER FAILED" "CRITICAL"
+                log_and_alert "FAILURE" "❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "CRITICAL"
                 exit 1
             fi
         else

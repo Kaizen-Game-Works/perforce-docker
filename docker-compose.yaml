@@ -1,5 +1,5 @@
 # Remember to setup a .env alongside this file
-# that provides the values for MYSQL_ROOT_PASSWORD 
+# that provides the values for P4_USERNAME 
 # and others. Look at the sample.env to get started
 
 

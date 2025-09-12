@@ -11,6 +11,9 @@ services:
     ports:
       - '1666:1666'
     environment:
+      P4NAME: master
+      P4ROOT: /data/master
+      P4SSLDIR: /data/master/root/ssl
       P4USER: ${P4_USERNAME}
       P4PASSWD: ${P4_PASSWORD}
       P4D_USE_UNICODE: 'true'

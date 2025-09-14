@@ -6,3 +6,5 @@
 .DS_STORE
 ssh_key
 .ssh
+docker-compose.yaml
+docker-compose.yml

@@ -1,8 +1,10 @@
 version: '2.1'
 services:
   p4d:
-    image: hawkmothstudio/helix-p4d
-    build: helix-p4d
+    # image: hawkmothstudio/helix-p4d
+    # build: helix-p4d
+    image: kaizen-helix-p4d
+    build: kgw-helix-p4d
     ports:
       - '1666:1666'
     environment:

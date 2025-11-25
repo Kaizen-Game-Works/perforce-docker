@@ -45,6 +45,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/letsencrypt:/etc/letsecnrypt:ro
-      - /data/docker_volume/swarm/_data:/opt/perforce/swarm/data
+      - /data/docker_volume/swarm/data:/opt/perforce/swarm/data
     depends_on:
       - p4d

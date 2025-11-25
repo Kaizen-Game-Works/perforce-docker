@@ -17,29 +17,16 @@ Edit the new .env file to contain the details for the setup
 vi .env
 ```
 
-Make the backup script executable
-```bash
-cd utils/backup
-chmod +x p4_backup.sh
-chmod +x schedule_backup.sh
-```
-
-Make the verify script executable
-```bash
-cd ../../utils/verify
-chmod +x p4_verify.sh
-chmod +x schedule_verify.sh
-```
-
-Make the logger script executable
-```bash
-cd ../../utils/logger
-chmod +x logger.sh
-```
-
 And now run schedule backups to choose a time to perform the P4 backups
 ```bash
+cd utils/backup
 ./schedule_backup
+```
+
+And now run schedule backups to choose a time to perform the P4 verify
+```bash
+cd utils/verify
+./schedule_verify
 ```
 
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc

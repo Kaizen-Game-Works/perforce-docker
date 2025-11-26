@@ -7,6 +7,7 @@ services:
     build: kgw-helix-p4d
     ports:
       - '1666:1666'
+    restart: unless-stopped
     environment:
       P4USER: ${P4_USERNAME}
       P4PASSWD: ${P4_PASSWORD}
@@ -31,6 +32,7 @@ services:
     build: helix-swarm
     ports:
       - '1667:80'
+    restart: unless-stopped
     environment:
       P4PORT: 'ssl:p4d:1666'
       P4USER: ${P4_USERNAME}

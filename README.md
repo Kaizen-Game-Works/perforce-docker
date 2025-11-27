@@ -25,6 +25,8 @@ chown -R 1000:1000 /data/docker_volumes/perforce
 chown -R 1000:1000 /data/docker_volumes/swarm
 ```
 
+Ensure that the scripts in the utils folder have the execution bit set
+
 Open the relevent ports in your firewall (see docker-compose.yml for the correct ports)
 
 Bring up the docker container

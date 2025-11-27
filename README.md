@@ -36,7 +36,12 @@ docker compose up -d
 
 Test it all works. 
 
-If it does then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
+If it fails then make whatever changes are necessary, then rebuild the container
+```
+docker compose build --no-cache
+```
+
+If it does work then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
 
 Now schedule backups to choose a time to perform the P4 backups
 ```bash

@@ -4,7 +4,7 @@ services:
     # image: hawkmothstudio/helix-p4d
     # build: helix-p4d
     image: kaizen-helix-p4d
-    build: kgw-helix-p4d
+    build: .
     ports:
       - '1666:1666'
     restart: unless-stopped

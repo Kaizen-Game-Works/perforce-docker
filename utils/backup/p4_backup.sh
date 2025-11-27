@@ -93,7 +93,7 @@ mkdir -p "$BACKUP_DIR"
             log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)" "$LOGFILE"
         else
             log_and_alert "FAILURE" "❌ Perforce Verification failed for journal $file on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
-            # exit 1
+            exit 1
         fi
     done
 

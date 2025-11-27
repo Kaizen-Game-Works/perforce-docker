@@ -43,6 +43,13 @@ docker compose build --no-cache
 
 If it does work then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
 
+You also might need to setup folders to match what's at the top of each script. e.g. 
+```
+mkdir -p /data/perforce_backups/data
+mkdir -p /data/perforce_backups/logs
+chown -R 1000:1000 /data/perforce_backups
+```
+
 Now schedule backups to choose a time to perform the P4 backups
 ```bash
 cd utils/backup

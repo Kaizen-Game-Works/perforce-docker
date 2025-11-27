@@ -88,8 +88,8 @@ mkdir -p "$BACKUP_DIR"
     # --- Verify Journals ---
     for file in "$META_DIR"/journal.*; do
         [[ -f "$file" ]] || continue
-        [[ "$file" == journal.0 ]] && continue # Skip .md5 files
         basename=$(basename "$file")
+        [[ "$basename" == journal.0 ]] && continue # Skip journal.0 file. That will always fail
         if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
             log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)" "$LOGFILE"
         else

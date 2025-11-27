@@ -17,13 +17,32 @@ Edit the new .env file to contain the details for the setup
 vi .env
 ```
 
-And now run schedule backups to choose a time to perform the P4 backups
+Create the directory structure as specified in the docker-compose.yml file (e.g. /data/docker_volumes/perforce/data). Do this for both Perforce and Swarm (if deploying swarm)
+
+Once created, set the permissions correctly
+```
+chown -R 1000:1000 /data/docker_volumes/perforce
+chown -R 1000:1000 /data/docker_volumes/swarm
+```
+
+Open the relevent ports in your firewall (see docker-compose.yml for the correct ports)
+
+Bring up the docker container
+```
+docker compose up -d
+```
+
+Test it all works. 
+
+If it does then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
+
+Now schedule backups to choose a time to perform the P4 backups
 ```bash
 cd utils/backup
 ./schedule_backup
 ```
 
-And now run schedule backups to choose a time to perform the P4 verify
+And now run schedule verify to choose a time to perform the P4 verify
 ```bash
 cd utils/verify
 ./schedule_verify

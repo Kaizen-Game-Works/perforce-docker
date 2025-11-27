@@ -3,7 +3,7 @@ services:
   p4d:
     image: hawkmothstudio/helix-p4d
     build: helix-p4d
-    container-name: perforce-p4d-1
+    container_name: perforce-p4d-1
     ports:
       - '1666:1666'
     restart: unless-stopped
@@ -29,7 +29,7 @@ services:
   swarm:
     image: hawkmothstudio/helix-swarm
     build: helix-swarm
-    container-name: perforce-swarm-1
+    container_name: perforce-swarm-1
     ports:
       - '1667:80'
     restart: unless-stopped

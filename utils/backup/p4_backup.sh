@@ -16,7 +16,18 @@ source $SCRIPT_DIR/../logger/logger.sh
 # --- Prune old backup logs, keeping only the last 100 ---
 MAX_LOGS=100
 mkdir -p "$LOG_DIR"
-ls -1tr "$LOG_DIR"/backup_*.log | head -n -"$MAX_LOGS" | xargs -r rm -f
+
+# Make globs expand to empty array if no match
+shopt -s nullglob
+
+# Collect all backup log files
+LOG_FILES=("$LOG_DIR"/backup_*.log)
+
+# Only prune if there are more than MAX_LOGS
+if (( ${#LOG_FILES[@]} > MAX_LOGS )); then
+    # Sort by modification time and remove oldest files
+    ls -1tr "${LOG_FILES[@]}" | head -n -"$MAX_LOGS" | xargs -r rm -f
+fi
 
 mkdir -p "$BACKUP_DIR"
 

@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/../../.env"
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-LOG_DIR="/opt/p4data/p4d_backup_logs"
+LOG_DIR="/data/perforce_backup/logs"
 LOGFILE="$LOG_DIR/verify_$TIMESTAMP.log"
 
 source $SCRIPT_DIR/../logger/logger.sh

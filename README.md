@@ -50,6 +50,18 @@ mkdir -p /data/perforce_backups/logs
 chown -R 1000:1000 /data/perforce_backups
 ```
 
+Test the backup script
+```
+cd utils/backup
+./p4_backup.sh
+```
+
+Test the verify script
+```
+cd utils/verify
+./p4_verify.sh
+```
+
 Now schedule backups to choose a time to perform the P4 backups
 ```bash
 cd utils/backup

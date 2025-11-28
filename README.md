@@ -29,7 +29,7 @@ Ensure that the scripts in the utils folder have the execution bit set.
 
 If you're supplying a SSH key for rsync backup, ensure the correct permissions are set
 ```
-chmod 400 <your_ssh_private_key_file>
+chmod 600 <your_ssh_private_key_file>
 ```
 
 Open the relevent ports in your firewall (see docker-compose.yml for the correct ports)

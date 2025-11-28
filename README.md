@@ -6,6 +6,12 @@ The docker-compose file has been modified to use a .env file in order to provide
 usernames and passwords. See docker-compose.yaml and sample.env for details
 
 ## Additional Setup
+
+Make sure the server timezone is correct
+```
+sudo timedatectl set-timezone Europe/London
+```
+
 Make the .env file
 ```bash
 cp sample.env .env

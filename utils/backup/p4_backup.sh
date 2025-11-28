@@ -78,7 +78,7 @@ mkdir -p "$BACKUP_DIR"
         [[ -f "$file" ]] || continue
         [[ "$file" == *.md5 ]] && continue # Skip .md5 files
         basename=$(basename "$file")
-        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
+        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc "/data/$basename"; then
             log_and_alert "SUCCESS" "✅ Perforce Verified checkpoint $file on $(hostname) at $(date)" "$LOGFILE"
         else
             log_and_alert "FAILURE" "❌ Perforce Verification failed for checkpoint $file on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
@@ -138,7 +138,7 @@ mkdir -p "$BACKUP_DIR"
         # Make the remote directory, just in case it does not exist
         ssh -p${SSH_PORT} -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
         # Rsync local backup directory to remote, mirroring contents
-        rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
+        rsync -aH --progress --delete --update -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
         log_and_alert "SUCCESS" "✅ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning" "$LOGFILE"
     else
@@ -156,7 +156,7 @@ mkdir -p "$BACKUP_DIR"
             # Pre-create remote depot directory
             ssh -p "${SSH_PORT}" -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
-            if rsync -aH --delete --progress -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
+            if rsync -aH --delete --progress --update -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
                 log_and_alert "SUCCESS" "✅ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
                 log_and_alert "FAILURE" "❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"

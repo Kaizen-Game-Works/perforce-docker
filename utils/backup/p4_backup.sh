@@ -135,6 +135,8 @@ mkdir -p "$BACKUP_DIR"
             ls -1tr $BACKUP_BASE_DIR/ | head -n -"$MAX_REMOTE_BACKUPS" | xargs -r -I{} rm -rf "$BACKUP_BASE_DIR/{}"
         fi
 
+        # Make the remote directory, just in case it does not exist
+        ssh -p${SSH_PORT} -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
         # Rsync local backup directory to remote, mirroring contents
         rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
@@ -152,7 +154,7 @@ mkdir -p "$BACKUP_DIR"
             fi
 
             # Pre-create remote depot directory
-            ssh -p "$SSH_PORT" -i "$SSH_KEY" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
+            ssh -p "${SSH_PORT}" -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
             if rsync -aH --delete --progress -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
                 log_and_alert "SUCCESS" "✅ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"

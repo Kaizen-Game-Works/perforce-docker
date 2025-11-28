@@ -7,7 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/../../.env"
 
 TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-BACKUP_DIR="/data/perforce_backup/data/$TIMESTAMP"
+BACKUP_BASE_DIR="/data/perforce_backup/data"
+BACKUP_DIR="$BACKUP_BASE_DIR/$TIMESTAMP"
 LOG_DIR="/data/perforce_backup/logs"
 LOGFILE="$LOG_DIR/backup_$TIMESTAMP.log"
 
@@ -131,11 +132,11 @@ mkdir -p "$BACKUP_DIR"
         # Prune local backup directories, keeping only the last MAX_REMOTE_BACKUPS
         if [[ -n "${MAX_REMOTE_BACKUPS:-}" ]]; then
             echo "$(date) - Pruning local backup directories, keeping only the last $MAX_REMOTE_BACKUPS backups"
-            ls -1tr /opt/p4data/p4d_backup/ | head -n -"$MAX_REMOTE_BACKUPS" | xargs -r -I{} rm -rf "/opt/p4data/p4d_backup/{}"
+            ls -1tr $BACKUP_BASE_DIR/ | head -n -"$MAX_REMOTE_BACKUPS" | xargs -r -I{} rm -rf "$BACKUP_BASE_DIR/{}"
         fi
 
         # Rsync local backup directory to remote, mirroring contents
-        rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "/opt/p4data/p4d_backup/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
+        rsync -aH --progress --delete -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
         log_and_alert "SUCCESS" "✅ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning" "$LOGFILE"
     else

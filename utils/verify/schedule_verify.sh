@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Path to your Perforce verify script
 VERIFY_SCRIPT="/opt/docker-containers/perforce-docker/utils/verify/p4_verify.sh"
-LOGFILE="/data/perforce_backups/logs/cron-verify.log"
+LOGFILE="/data/perforce_backup/logs/cron-verify.log"
 
 # Make sure the script is executable
 chmod +x "$VERIFY_SCRIPT"

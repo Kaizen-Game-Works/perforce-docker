@@ -111,6 +111,11 @@ cd utils/verify
 ./schedule_verify
 ```
 
+Verify these have been entered correctly into cron
+```
+crontab -l
+```
+
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
 
 # Useful Info

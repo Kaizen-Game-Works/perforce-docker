@@ -1,5 +1,0 @@
-User:		p4-service-user
-Type:		service
-Email:		p4service@kaizengameworks.com
-FullName:	Service User
-

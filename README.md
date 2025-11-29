@@ -28,6 +28,8 @@ FullName: 	Service User-01
 
 Also ensure thay your docker-compose.yml has the following set
 ```
+P4D_LOAD_USERS: 'true'
+...
 SWARM_USER=${SWARM_USER_NAME}
 SWARM_PASSWORD=${SWARM_PASSWORD}
 SWARM_USER_CREATE: 'false'

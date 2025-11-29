@@ -20,10 +20,10 @@ nano helix-p4d/p4-users/service-user-01.txt
 ```
 Then provide the information you want to use for your service user
 ```
-User:		service-user-01
+User:		swarm-service-user-01
 Type:		service
-Email:		service-user-01@domain.com
-FullName: 	Service User-01
+Email:		swarm-service-user-01@domain.com
+FullName: 	            Swarm-Service User-01
 ```
 
 Also ensure thay your docker-compose.yml has the following set

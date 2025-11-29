@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Path to your backup script
 BACKUP_SCRIPT="/opt/docker-containers/perforce-docker/utils/backup/p4_backup.sh"
-LOGFILE="/data/perforce_backups/logs/cron.log"
+LOGFILE="/data/perforce_backup/logs/cron.log"
 
 # Make sure the script is executable
 chmod +x "$BACKUP_SCRIPT"

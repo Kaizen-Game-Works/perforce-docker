@@ -16,7 +16,7 @@ sudo timedatectl set-timezone Europe/London
 
 Add a new user file which will contain a service user perforce. This will be used for Swarm so we can have a long lived user without requiring licenses. If you're not installing Swarm, skip this step.
 ```
-nano helix-p4d/p4-users/service-user-01.txt
+nano helix-p4d/p4-users/swarm-service-user-01.txt
 ```
 Then provide the information you want to use for your service user
 ```

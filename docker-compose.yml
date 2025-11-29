@@ -41,7 +41,7 @@ services:
       SWARM_USER: ${SWARM_USER_NAME}
       SWARM_PASSWD: ${SWARM_PASSWORD}
       SWARM_USER_CREATE: 'false'
-      SWARM_GROUP_CREATE: 'false'
+      SWARM_GROUP_CREATE: 'true'
       SWARM_HOST: 'localhost'
       SWARM_PORT: '80'
       SWARM_TRIGGER_TOKEN: ${SWARM_TRIGGER_TOKEN}

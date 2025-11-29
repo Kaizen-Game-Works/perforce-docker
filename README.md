@@ -82,9 +82,9 @@ If it does work then look at the backup and verify scripts, and the .env you've 
 
 You also might need to setup folders to match what's at the top of each script. e.g. 
 ```
-mkdir -p /data/perforce_backups/data
-mkdir -p /data/perforce_backups/logs
-chown -R 1000:1000 /data/perforce_backups
+mkdir -p /data/perforce_backup/data
+mkdir -p /data/perforce_backup/logs
+chown -R 1000:1000 /data/perforce_backup
 ```
 
 Test the backup script

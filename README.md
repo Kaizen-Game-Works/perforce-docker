@@ -7,9 +7,31 @@ usernames and passwords. See docker-compose.yaml and sample.env for details
 
 ## Additional Setup
 
+Clone the Git Repo
+
 Make sure the server timezone is correct
 ```
 sudo timedatectl set-timezone Europe/London
+```
+
+Add a new user file which will contain a service user perforce. This will be used for Swarm so we can have a long lived user without requiring licenses. If you're not installing Swarm, skip this step.
+```
+nano helix-p4d/p4-users/service-user-01.txt
+```
+Then provide the information you want to use for your service user
+```
+User:		service-user-01
+Type:		service
+Email:		service-user-01@domain.com
+FullName: 	Service User-01
+```
+
+Also ensure thay your docker-compose.yml has the following set
+```
+SWARM_USER=${SWARM_USER_NAME}
+SWARM_PASSWORD=${SWARM_PASSWORD}
+SWARM_USER_CREATE: 'false'
+SWARM_GROUP_CREATE: 'true'
 ```
 
 Make the .env file
@@ -22,6 +44,8 @@ Edit the new .env file to contain the details for the setup
 ```bash
 vi .env
 ```
+
+If you're using Swarm, make sure that the SWARM_USER matches the service user you created above 
 
 Create the directory structure as specified in the docker-compose.yml file (e.g. /data/docker_volumes/perforce/data). Do this for both Perforce and Swarm (if deploying swarm)
 

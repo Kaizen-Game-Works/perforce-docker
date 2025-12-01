@@ -76,8 +76,32 @@ mkdir -p "$BACKUP_DIR"
     # --- Verify checkpoint ---
     for file in "$META_DIR"/checkpoint.*; do
         [[ -f "$file" ]] || continue
-        [[ "$file" == *.md5 ]] && continue # Skip .md5 files
+        [[ "$file" == *.md5 ]] && continue  # skip hash files
+    
         basename=$(basename "$file")
+        md5file="$file.md5"
+    
+        # --- MD5 CHECK ---
+        if [[ -f "$md5file" ]]; then
+            echo "$(date) - Verifying MD5 for $file"
+            
+            # Extract expected hash (first field of the .md5 file)
+            expected=$(cut -d ' ' -f1 "$md5file")
+            # Compute actual hash
+            actual=$(md5sum "$file" | cut -d ' ' -f1)
+    
+            if [[ "$expected" != "$actual" ]]; then
+                log_and_alert "FAILURE" "❌ MD5 mismatch for checkpoint $file (expected $expected, got $actual)" "$LOGFILE" "CRITICAL"
+                exit 1
+            else
+                log_and_alert "SUCCESS" "✅ MD5 verified for checkpoint $file" "$LOGFILE"
+            fi
+        else
+            log_and_alert "FAILURE" "❌ Missing MD5 file: $md5file" "$LOGFILE" "CRITICAL"
+            exit 1
+        fi
+    
+        # --- Perform the actual P4 verification - This can be expensive. Maybe need to do this less frequently... ---
         if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc "/data/$basename"; then
             log_and_alert "SUCCESS" "✅ Perforce Verified checkpoint $file on $(hostname) at $(date)" "$LOGFILE"
         else

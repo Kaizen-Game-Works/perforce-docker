@@ -85,10 +85,12 @@ mkdir -p "$BACKUP_DIR"
         if [[ -f "$md5file" ]]; then
             echo "$(date) - Verifying MD5 for $file"
             
-            # Extract expected hash (first field of the .md5 file)
-            expected=$(cut -d ' ' -f1 "$md5file")
-            # Compute actual hash
-            actual=$(md5sum "$file" | cut -d ' ' -f1)
+            # Extract expected MD5 from BSD-style file:
+            # Format: MD5 (checkpoint.93) = ABC123...
+            expected=$(awk -F'= ' '{print $2}' "$md5file" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')
+
+            # Compute actual MD5 (Linux md5sum produces lowercase)
+            actual=$(md5sum "$file" | awk '{print $1}' | tr '[:lower:]' '[:upper:]')
     
             if [[ "$expected" != "$actual" ]]; then
                 log_and_alert "FAILURE" "❌ MD5 mismatch for checkpoint $file (expected $expected, got $actual)" "$LOGFILE" "CRITICAL"

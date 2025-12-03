@@ -116,7 +116,8 @@ mkdir -p "$BACKUP_DIR"
     for file in "$META_DIR"/journal.*; do
         [[ -f "$file" ]] || continue
         basename=$(basename "$file")
-        [[ "$basename" == journal.0 ]] && continue # Skip journal.0 file. That will always fail
+        # The first backups you do might contain journal.0, and this will always fail as it's the live file so lets skip it
+        [[ "$basename" == journal.0 ]] && continue
         if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
             log_and_alert "SUCCESS" "✅ Perforce Verified journal $file on $(hostname) at $(date)" "$LOGFILE"
         else

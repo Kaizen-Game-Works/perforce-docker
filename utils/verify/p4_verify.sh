@@ -16,23 +16,33 @@ source $SCRIPT_DIR/../logger/logger.sh
     echo ""
     echo "$(date) - Starting Perforce verify..."
 
+    log_and_alert "SUCCESS" "▶▶▶\n🕒 $(date)\n✔ Starting Perforce Verify on $(hostname)" "$LOGFILE"
+
     # --- Check container is running ---
     if ! docker ps --format '{{.Names}}' | grep -q "^${P4D_DOCKER_INSTANCE}$"; then
-        log_and_alert "FAILURE" "❌ Perforce Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"
+        log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Container $P4D_DOCKER_INSTANCE not running" "$LOGFILE" "CRITICAL"
         exit 1
+    else
+        log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Container $P4D_DOCKER_INSTANCE is running" "$LOGFILE"
     fi
 
      # --- Run verify inside container ---
     if docker exec "$P4D_DOCKER_INSTANCE" p4 verify -u -q //...; then
-        log_and_alert "SUCCESS" "✅ Perforce Verification completed successfully on $(hostname) at $(date)" "$LOGFILE"
+        log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verification completed successfully" "$LOGFILE"
     else
-        log_and_alert "FAILURE" "❌ Perforce Verification failed on $(hostname) at $(date)" "CRITICAL" "$LOGFILE"
+        log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Verification failed" "CRITICAL" "$LOGFILE"
         exit 1
     fi
+
+    SUCCESS_MSG="✅✅✅\n🕒 $(date)\n Perforce verifiction SUCCESSFUL on $(hostname)\n✅✅✅"
+    echo "$SUCCESS_MSG"
+    post_to_slack "$SUCCESS_MSG" "$LOGFILE"
+    post_to_newrelic "SUCCESS" "NORMAL"
+    
 } >> "$LOGFILE" 2>&1 || {
-    ERROR_MSG="❌ Perforce verify FAILED on $(hostname) at $(date)"
+    ERROR_MSG="❌❌❌\n🕒 $(date)\n Perforce verify FAILED on $(hostname)\n❌❌❌"
     echo "$ERROR_MSG" >> "$LOGFILE"
-    post_to_slack "$ERROR_MSG"
+    post_to_slack "$ERROR_MSG" "$LOGFILE"
     post_to_newrelic "FAILURE" "CRITICAL"
     exit 1
 }

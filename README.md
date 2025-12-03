@@ -2,8 +2,10 @@
 [![ci](https://github.com/hawkmoth-studio/perforce-docker/workflows/ci/badge.svg)](https://github.com/hawkmoth-studio/perforce-docker/actions)
 
 # KAIZEN CHANGES
-The docker-compose file has been modified to use a .env file in order to provide
-usernames and passwords. See docker-compose.yaml and sample.env for details
+This is based on the excellent hawkmoth-studio/perforce-docker repo, but with some additions.
+1. Providing working docker container setups
+2. The use of a .env file to store the setup and secrets
+3. Adding backup scripts that will help journal + checkpoint, verify those backups, export those backups to S3, perform full rsync backups of all data, and report progress to slack and new-relic
 
 ## Additional Setup
 

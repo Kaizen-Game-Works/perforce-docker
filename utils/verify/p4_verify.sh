@@ -16,7 +16,7 @@ source $SCRIPT_DIR/../logger/logger.sh
     echo ""
     echo "$(date) - Starting Perforce verify..."
 
-    log_and_alert "SUCCESS" "▶▶▶\n🕒 $(date)\n✔ Starting Perforce Verify on $(hostname)" "$LOGFILE"
+    log_and_alert "SUCCESS" "▶▶▶VERIFY▶▶▶\n🕒 $(date)\n✔ Starting Perforce Verify on $(hostname)" "$LOGFILE"
 
     # --- Check container is running ---
     if ! docker ps --format '{{.Names}}' | grep -q "^${P4D_DOCKER_INSTANCE}$"; then

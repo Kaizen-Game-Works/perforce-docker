@@ -37,6 +37,8 @@ mkdir -p "$BACKUP_DIR"
     echo ""
     echo "$(date) - Starting Perforce backup..."
 
+    log_and_alert "SUCCESS" "▶▶▶ $(date)\nStarting Perforce Backup" "$LOGFILE" "CRITICAL"
+
     # --- Check container is running ---
     if ! docker ps --format '{{.Names}}' | grep -q "^${P4D_DOCKER_INSTANCE}$"; then
         log_and_alert "FAILURE" "❌ Perforce Container $P4D_DOCKER_INSTANCE not running on $(hostname) at $(date)" "$LOGFILE" "CRITICAL"

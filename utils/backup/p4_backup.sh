@@ -218,13 +218,13 @@ mkdir -p "$BACKUP_DIR"
 
     SUCCESS_MSG="✅\n🕒 $(date)\n▶ Perforce backup SUCCESSFUL on $(hostname)"
     echo "$SUCCESS_MSG"
-    post_to_slack "$SUCCESS_MSG"
+    post_to_slack "$SUCCESS_MSG" "$LOGFILE"
     post_to_newrelic "SUCCESS" "NORMAL"
 
 } >> "$LOGFILE" 2>&1 || {
     ERROR_MSG="❌\n🕒 $(date)\n▶ Perforce backup FAILED on $(hostname)"
     echo "$ERROR_MSG" >> "$LOGFILE"
-    post_to_slack "$ERROR_MSG"
+    post_to_slack "$ERROR_MSG" "$LOGFILE"
     post_to_newrelic "FAILURE" "CRITICAL"
     exit 1
 }

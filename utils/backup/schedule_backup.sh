@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Path to your backup script
-BACKUP_SCRIPT="$P4_BACKUP_SCRIPT"
+BACKUP_SCRIPT="$SCRIPT_DIR/p4_backup.sh"
 LOGFILE="$P4_BACKUP_DIR_LOGS/cron-backup.log"
 
 # Make sure the script is executable

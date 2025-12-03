@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Path to your Perforce verify script
-VERIFY_SCRIPT="$P4_VERIFY_SCRIPT"
+VERIFY_SCRIPT="$SCRIPT_DIR/p4_verify.sh"
 LOGFILE="$P4_BACKUP_DIR_LOGS/cron-verify.log"
 
 # Make sure the script is executable

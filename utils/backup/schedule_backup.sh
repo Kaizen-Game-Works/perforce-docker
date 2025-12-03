@@ -3,6 +3,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Load secrets file (assumes .env is in folders above dir holding this the script, adjust if needed)
+. "$SCRIPT_DIR/../../.env"
+
 # Path to your backup script
 BACKUP_SCRIPT="$SCRIPT_DIR/p4_backup.sh"
 LOGFILE="$P4_BACKUP_DIR_LOGS/cron-backup.log"

@@ -71,15 +71,31 @@ chown -R 1000:1000 /data/docker_volumes/perforce
 chown -R 1000:1000 /data/docker_volumes/swarm
 ```
 
+## PREPARE FOR BACKUPS
+
 Ensure that the scripts in the utils folder have the execution bit set.
+
+Setup folders to match what's set in your .env script for the P4_BACKUP_DIR_DATA and P4_BACKUP_DIR_LOGS values
+```
+mkdir -p /data/perforce_backup/data
+mkdir -p /data/perforce_backup/logs
+chown -R 1000:1000 /data/perforce_backup
+```
 
 If you're supplying a SSH key for rsync backup, ensure the correct permissions are set
 ```
 chmod 600 <your_ssh_private_key_file>
 ```
+Also ensure your .env file is setup correctly for the rsync.
 
+If you're using S3 backup, install the offical S3 CLI (AWSCLI) and follow the setup instructions to connect to your bucket. Ensure that you have entered the correct values in the .env file
+
+If you want the logs to report to Slack, setup a Slack bot for your account and setup the bot-token etc within the .env file
+
+## FIREWALL SETUP
 Open the relevent ports in your firewall (see docker-compose.yml for the correct ports)
 
+## START THE DOCKER CONTAINER
 Bring up the docker container
 ```
 docker compose up -d
@@ -94,12 +110,6 @@ docker compose build --no-cache
 
 If it does work then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
 
-You also might need to setup folders to match what's at the top of each script. e.g. 
-```
-mkdir -p /data/perforce_backup/data
-mkdir -p /data/perforce_backup/logs
-chown -R 1000:1000 /data/perforce_backup
-```
 
 Test the backup script
 ```

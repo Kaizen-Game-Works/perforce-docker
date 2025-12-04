@@ -10,7 +10,7 @@ services:
     build: helix-p4d
     container_name: ${P4D_DOCKER_INSTANCE}
     ports:
-      - '11666:1666'
+      - '1666:1666'
     restart: unless-stopped
     environment:
       P4NAME: master
@@ -39,9 +39,9 @@ services:
     build: helix-swarm
     container_name: ${SWARM_DOCKER_INSTANCE}
     ports:
-      - '11667:80'
+      - '1667:80'
     environment:
-      P4PORT: 'ssl:p4d:11666'
+      P4PORT: 'ssl:p4d:1666'
       P4USER: ${P4_USERNAME}
       P4PASSWD: ${P4_PASSWORD}
       P4D_USE_UNICODE: 'true'

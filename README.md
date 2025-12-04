@@ -16,6 +16,18 @@ Make sure the server timezone is correct
 sudo timedatectl set-timezone Europe/London
 ```
 
+Create your docker-compose.yaml file
+```
+cp sample.docker-compose.yaml docker-compose.yaml
+```
+
+Edit the docker-compose file
+```
+nano docker-compose.yaml
+```
+
+Setup the options as required, with particular focus on the volumes and ports. More information about the docker-compose can be found later in this document.
+
 Add a new user file which will contain a service user perforce. This will be used for Swarm so we can have a long lived user without requiring licenses. If you're not installing Swarm, skip this step.
 ```
 nano helix-p4d/p4-users/swarm-service-user-01.txt

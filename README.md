@@ -98,6 +98,7 @@ Open the relevent ports in your firewall (see docker-compose.yml for the correct
 ## START THE DOCKER CONTAINER
 Bring up the docker container
 ```
+docker compose build --no-cache
 docker compose up -d
 ```
 

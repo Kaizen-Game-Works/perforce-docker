@@ -60,11 +60,12 @@ mkdir -p /data/perforce_backup/logs
 chown -R 1000:1000 /data/perforce_backup
 ```
 
-If you're supplying a SSH key for rsync backup, ensure the correct permissions are set
+If you're using the rsync option to backup all data within perforce (warning - this could be A LOT of data), then you might need to supply a SSH key for rsync backup. Copy the private key to some directory as specified in the .env file and ensure the correct permissions are set. Make sure that this file is still kept securely.
 ```
 chmod 600 <your_ssh_private_key_file>
+chown <youruser> <your_ssh_private_key_file>
+chgrp <youruser> <your_ssh_private_key_file>
 ```
-Also ensure your .env file is setup correctly for the rsync.
 
 If you're using S3 backup, install the offical S3 CLI (AWSCLI) and follow the setup instructions to connect to your bucket. Ensure that you have entered the correct values in the .env file
 

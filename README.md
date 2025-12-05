@@ -28,28 +28,6 @@ nano docker-compose.yaml
 
 Setup the options as required, with particular focus on the volumes and ports. More information about the docker-compose can be found later in this document.
 
-Add a new user file which will contain a service user perforce. This will be used for Swarm so we can have a long lived user without requiring licenses. If you're not installing Swarm, skip this step.
-```
-nano helix-p4d/p4-users/swarm-service-user-01.txt
-```
-Then provide the information you want to use for your service user
-```
-User:		swarm-service-user-01
-Type:		service
-Email:		swarm-service-user-01@domain.com
-FullName: 	            Swarm-Service User-01
-```
-
-Also ensure thay your docker-compose.yml has the following set
-```
-P4D_LOAD_USERS: 'true'
-...
-SWARM_USER=${SWARM_USER_NAME}
-SWARM_PASSWORD=${SWARM_PASSWORD}
-SWARM_USER_CREATE: 'false'
-SWARM_GROUP_CREATE: 'true'
-```
-
 Make the .env file
 ```bash
 cp sample.env .env

@@ -128,6 +128,7 @@ If you need to make changes to the users, type map, versions or anything else th
 docker compose stop <swarm-instance-name>
 docker compose stop <p4d-instance-name>
 docker compose build --no-cache
+docker exec -it <instance-name> bin/bash <---This will let you use the cli within the docker container
 ```
 
 # perforce-docker

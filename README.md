@@ -125,6 +125,7 @@ Perform any additional setup needed, such as installing aws cli, setting up ssh 
 # Useful Info
 If you need to make changes to the users, type map, versions or anything else then you should stop the docker containers, then rebuild without caching
 ```
+docker ps <---- see running instances
 docker compose stop <swarm-instance-name>
 docker compose stop <p4d-instance-name>
 docker compose build --no-cache

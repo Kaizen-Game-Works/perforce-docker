@@ -11,6 +11,7 @@ BACKUP_BASE_DIR="$P4_BACKUP_DIR_DATA"
 BACKUP_DIR="$BACKUP_BASE_DIR/$TIMESTAMP"
 LOG_DIR="$P4_BACKUP_DIR_LOGS"
 LOGFILE="$LOG_DIR/backup_$TIMESTAMP.log"
+P4ROOT="/data/master"
 
 source $SCRIPT_DIR/../logger/logger.sh
 
@@ -47,8 +48,30 @@ mkdir -p "$BACKUP_DIR"
         log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Container $P4D_DOCKER_INSTANCE is running" "$LOGFILE"
     fi
 
+    # Check P4ROOT (as specified above) exists
+    if ! docker exec "$P4D_DOCKER_INSTANCE" test -d "$P4ROOT"; then
+        log_and_alert "FAILURE" "🕒 $(date)\n❌ P4ROOT directory '$P4ROOT' does not exist inside container." "$LOGFILE" "CRITICAL"
+        exit 1
+    fi
+    
+    # Check db.* files exist
+    DB_COUNT=$(docker exec "$P4D_DOCKER_INSTANCE" sh -c "ls $P4ROOT/db.* 2>/dev/null | wc -l")
+    if [ "$DB_COUNT" -eq 0 ]; then
+        log_and_alert "FAILURE" "🕒 $(date)\n❌ No db.* files found in $P4ROOT — NOT a valid Perforce server root!" "$LOGFILE" "CRITICAL"
+        exit 1
+    fi
+    
+    # Check db.* files are non-empty
+    EMPTY_DB=$(docker exec "$P4D_DOCKER_INSTANCE" sh -c "find $P4ROOT -maxdepth 1 -name 'db.*' -size 0 2>/dev/null | wc -l")
+    if [ "$EMPTY_DB" -gt 0 ]; then
+        log_and_alert "FAILURE" "🕒 $(date)\n❌ One or more db.* files in $P4ROOT are empty — refusing to generate invalid checkpoint." "$LOGFILE" "CRITICAL"
+        exit 1
+    fi
+    
+    log_and_alert "SUCCESS" "🕒 $(date)\n✔ Valid P4ROOT detected at $P4ROOT with $DB_COUNT database tables." "$LOGFILE"
+
     # --- Run checkpoint inside container ---
-    if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc; then
+    if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jc; then
         log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Checkpoint created successfully" "$LOGFILE"
     else
         log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Failed to create checkpoint" "$LOGFILE" "CRITICAL"
@@ -59,19 +82,19 @@ mkdir -p "$BACKUP_DIR"
     mkdir -p "$META_DIR"
 
     # Copy checkpoint files
-    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c 'ls /data/checkpoint.* 2>/dev/null'); do
+    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c "ls $P4ROOT/checkpoint.* 2>/dev/null"); do
         docker cp "$P4D_DOCKER_INSTANCE:$file" "$META_DIR/"
     done
 
     # Copy journal files
-    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c 'ls /data/journal.* 2>/dev/null'); do
+    for file in $(docker exec "$P4D_DOCKER_INSTANCE" sh -c "ls $P4ROOT/journal.* 2>/dev/null"); do
         docker cp "$P4D_DOCKER_INSTANCE:$file" "$META_DIR/"
     done
 
     # Copy license and server.id if they exist
     for file in license server.id; do
-        if docker exec "$P4D_DOCKER_INSTANCE" test -e "/data/$file"; then
-            docker cp "$P4D_DOCKER_INSTANCE:/data/$file" "$META_DIR/"
+        if docker exec "$P4D_DOCKER_INSTANCE" test -e "$P4ROOT/$file"; then
+            docker cp "$P4D_DOCKER_INSTANCE:$P4ROOT/$file" "$META_DIR/"
         fi
     done
 
@@ -108,8 +131,10 @@ mkdir -p "$BACKUP_DIR"
         fi
     
         # --- Perform the actual P4 verification - This can be expensive. Maybe need to do this less frequently... ---
-        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jc "/data/$basename"; then
-            log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified checkpoint $file" "$LOGFILE"
+        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
+            CHECKPOINT_FILE_SIZE_MB=$(stat -c%s "$file")  # size in bytes
+            CHECKPOINT_FILE_SIZE_MB=$((CHECKPOINT_FILE_SIZE_MB / 1048576))  # convert to MB
+            log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified checkpoint $file ($CHECKPOINT_FILE_SIZE_MB MB)" "$LOGFILE"
         else
             log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Verification failed for checkpoint $file" "$LOGFILE" "CRITICAL"
             exit 1
@@ -122,8 +147,10 @@ mkdir -p "$BACKUP_DIR"
         basename=$(basename "$file")
         # The first backups you do might contain journal.0, and this will always fail as it's the live file so lets skip it
         [[ "$basename" == journal.0 ]] && continue
-        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -jv "/data/$basename"; then
-            log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified journal $file" "$LOGFILE"
+        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
+            JOURNAL_FILE_SIZE_MB=$(stat -c%s "$file")  # size in bytes
+            JOURNAL_FILE_SIZE_MB=$((JOURNAL_FILE_SIZE_MB / 1048576))  # convert to MB
+            log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified journal $file ($JOURNAL_FILE_SIZE_MB MB)" "$LOGFILE"
         else
             log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Verification failed for journal $file" "$LOGFILE" "CRITICAL"
             exit 1
@@ -202,12 +229,12 @@ mkdir -p "$BACKUP_DIR"
 
     # --- Rotate old checkpoints and journals, keep current journal ---
     {
-        CURRENT_JOURNAL=$(docker exec "$P4D_DOCKER_INSTANCE" p4d -r /data -rstat | awk '/Journal/ {print $3}')
+        CURRENT_JOURNAL=$(docker exec "$P4D_DOCKER_INSTANCE" p4d -r $P4ROOT -rstat | awk '/Journal/ {print $3}')
 
         echo "$(date) - Cleaning up old checkpoints and journals, keeping current journal: $CURRENT_JOURNAL"
 
         docker exec "$P4D_DOCKER_INSTANCE" sh -c '
-            cd /data
+            cd '"$P4ROOT"'
             for file in checkpoint.* journal.*; do
                 if [ "$file" != "'"$CURRENT_JOURNAL"'" ]; then
                     rm -f "$file"

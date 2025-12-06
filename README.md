@@ -22,21 +22,11 @@ The idea is to:
 
 Ensure you are performing these steps on the host, not in the container.
 ```
-sudo adduser perforce
-sudo groupadd docktrix
-sudo usermod -a -G docktrix root
-sudo usermod -a -G docktrix <your_user_name>
-sudo usermod -a -G docktrix perforce
-```
-
-Change the uid/gid map, adding the 1000:1000 base assignment
-```
-sudo nano /etc/subuid
-sudo nano /etc/subgid
-```
-And in both set
-```
-perforce:1000:1000
+sudo adduser p4user
+sudo groupadd p4group
+sudo usermod -a -G p4group root
+sudo usermod -a -G p4group <your_user_name>
+sudo usermod -a -G p4group p4user
 ```
 
 Turn on docker namespace by editing the daemon.json
@@ -46,16 +36,11 @@ sudo nano /etc/docker/daemon.json
 and adding the following
 ```
 {
-  "userns-remap": "perforce"
+  "userns-remap": "p4user"
 }
 ```
-And finally renumber
-```
-$ sudo usermod -u 1101 perforce
-$ sudo groupmod -g 1102 docktrix
-```
 
-Now logout or reboot the server so the changes are applied.
+Now reboot the server so the changes are applied.
 
 
 ## Additional Setup
@@ -90,22 +75,22 @@ If you're using Swarm, make sure that the SWARM_USER matches the service user yo
 Create the directory structure as specified in the docker-compose.yml file (e.g. /data/docker_volumes/perforce/data). Do this for both Perforce and Swarm (if deploying swarm)
 ```
 sudo mkdir -p /data/docker_volumes/perforce/data
-sudo mkdir -p /data/docker_volumes/perforce/logs
+sudo mkdir -p /data/docker_volumes/perforce/typemap
 sudo mkdir -p /data/docker_volumes/swarm/data
 ```
 
-Once created, set the permissions correctly
-EITHER
+Now copy your typemap file into the typemap volume. Note that even if you are using one from this repo, it must be copied out of the p4-typemap folder and into here. If you don't want to setup a typemap, skip this step and also ensure your docker-compose.yaml has the typemap option set to false.
 ```
-chown -R 1000:1000 /data/docker_volumes/perforce
-chown -R 1000:1000 /data/docker_volumes/swarm
+cp <my_typemap.txt> /data/docker_volumes/perforce/typemap/<my_typemap.txt>
 ```
-OR (If you've setup perforce user and docktrix group above)
+
+Once created, set the permissions correctly. Note we're using 100000:100000 to work correctly with the namespace we setup above. If you're using root, 1000:1000 will work
 ```
-sudo chmod -R 2770 /data/docker_volumes/perforce/*
-sudo chmod -R 2770 /data/docker_volumes/swarm/*
-sudo chown -R perforce:docktrix /data/docker_volumes/perforce/*
-sudo chown -R perforce:docktrix /data/docker_volumes/swarm/*
+chown -R 100000:p4group /data/docker_volumes/perforce
+sudo chmod -R 2770 /data/docker_volumes/perforce
+
+chown -R 100000:p4group /data/docker_volumes/swarm
+sudo chmod -R 2770 /data/docker_volumes/swarm
 ```
 
 ## PREPARE FOR BACKUPS
@@ -116,7 +101,10 @@ Setup folders to match what's set in your .env script for the P4_BACKUP_DIR_DATA
 ```
 mkdir -p /data/perforce_backup/data
 mkdir -p /data/perforce_backup/logs
-chown -R 1000:1000 /data/perforce_backup
+```
+And now setup permissions
+```
+chown -R 100000:p4group /data/perforce_backup
 ```
 
 If you're using the rsync option to backup all data within perforce (warning - this could be A LOT of data), then you might need to supply a SSH key for rsync backup. Copy the private key to some directory as specified in the .env file and ensure the correct permissions are set. Make sure that this file is still kept securely.

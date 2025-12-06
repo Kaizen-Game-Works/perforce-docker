@@ -1,20 +1,62 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![ci](https://github.com/hawkmoth-studio/perforce-docker/workflows/ci/badge.svg)](https://github.com/hawkmoth-studio/perforce-docker/actions)
 
+# IMPORTANT
+This has been tested on Ubuntu 24.04 LTS only!
+
 # KAIZEN CHANGES
 This is based on the excellent hawkmoth-studio/perforce-docker repo, but with some additions.
 1. Providing working docker container setups
 2. The use of a .env file to store the setup and secrets
 3. Adding backup scripts that will help journal + checkpoint, verify those backups, export those backups to S3, perform full rsync backups of all data, and report progress to slack and new-relic
 
+## User Setup
+If your running docker as a non-root user, it's likely that the process of checkpoint, journaling and rotating will cause p4 to shutdown due to assigning incorrect permissions to journal files. To solve this, we need to do some user remapping and namespacing. If you plan on running as root, you can probably ignore this section.
+
+The idea is to:
+1. Create a "perforce" user that will be used on the host as a proxy for the p4d user used on the container.
+2. Create a user group to hold our ubuntu user as well as the new perforce one.
+3. Configure the new perforce user to be used by Docker namespacing
+4. Renumber the user to match what the P4 user will be - for the docker instance, it has an internal user that runs the p4d service that ends up being UID 101 - so we have to use the base ID (1000) + this internal ID (101) as our host’s proxy user
+
+
+Ensure you are performing these steps on the host, not in the container.
+```
+sudo adduser perforce
+sudo groupadd docktrix
+sudo usermod -a -G docktrix ubuntu
+sudo usermod -a -G docktrix perforce
+```
+
+Change the uid/gid map, adding the 1000:1000 base assignment
+```
+sudo nano /etc/subuid
+sudo nano /etc/subgid
+perforce:1000:1000
+```
+
+Turn on docker namespace by editing the daemon.json
+```
+sudo nano /etc/docker/daemon.json
+```
+and adding the following
+```
+{
+  "userns-remap": "perforce"
+}
+```
+And finally renumber
+```
+$ sudo usermod -u 1101 perforce
+$ sudo groupmod -g 1102 docktrix
+```
+
+Now logout or reboot the server so the changes are applied.
+
+
 ## Additional Setup
 
-Clone the Git Repo
-
-Make sure the server timezone is correct
-```
-sudo timedatectl set-timezone Europe/London
-```
+It's best to perform some user remapping so that we have stability inside and outside of the container
 
 Create your docker-compose.yaml file
 ```

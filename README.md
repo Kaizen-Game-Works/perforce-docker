@@ -130,6 +130,7 @@ docker compose stop <swarm-instance-name>
 docker compose stop <p4d-instance-name>
 docker compose build --no-cache
 docker exec -it <instance-name> bin/bash <---This will let you use the cli within the docker container
+docker exec -e P4CHARSET=utf8 -it <instance-name> bin/bash <--- as above, but forcing unicode
 ```
 
 # perforce-docker

@@ -84,11 +84,19 @@ nano .env
 If you're using Swarm, make sure that the SWARM_USER matches the service user you created above 
 
 Create the directory structure as specified in the docker-compose.yml file (e.g. /data/docker_volumes/perforce/data). Do this for both Perforce and Swarm (if deploying swarm)
+```
+sudo mkdir -p /data/docker_volumes/perforce/data
+sudo mkdir -p /data/docker_volumes/perforce/logs
+sudo mkdir -p /data/docker_volumes/swarm/data
+```
 
 Once created, set the permissions correctly
 ```
 chown -R 1000:1000 /data/docker_volumes/perforce
 chown -R 1000:1000 /data/docker_volumes/swarm
+
+$ sudo chmod -R 2770 /data/docker_volumes/perforce/*
+$ sudo chown -R perforce:docktrix /data/docker_volumes/perforce/*
 ```
 
 ## PREPARE FOR BACKUPS

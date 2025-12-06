@@ -171,14 +171,14 @@ mkdir -p "$BACKUP_DIR"
     }
 
     # --- Sync to remote storage ---
-    if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" && -n "${SSH_KEY:-}" ]]; then
-        if [[ ! -f "$SSH_KEY" ]]; then
-            log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $SSH_KEY not found, cannot sync metadata" "$LOGFILE" "CRITICAL"
+    if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" && -n "${RSYNC_SSH_KEY:-}" ]]; then
+        if [[ ! -f "$RSYNC_SSH_KEY" ]]; then
+            log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $RSYNC_SSH_KEY not found, cannot sync metadata" "$LOGFILE" "CRITICAL"
             exit 1
         fi
 
         # Pre-create remote directory
-        ssh -p "$SSH_PORT" -i "$SSH_KEY" "$STORAGE_SERVER" "mkdir -p $REMOTE_META_DIR"
+        ssh -p "$RSYNC_SSH_PORT" -i "$RSYNC_SSH_KEY" "$STORAGE_SERVER" "mkdir -p $REMOTE_META_DIR"
 
         # Prune local backup directories, keeping only the last MAX_REMOTE_BACKUPS
         if [[ -n "${MAX_REMOTE_BACKUPS:-}" ]]; then
@@ -187,27 +187,27 @@ mkdir -p "$BACKUP_DIR"
         fi
 
         # Make the remote directory, just in case it does not exist
-        ssh -p${SSH_PORT} -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
+        ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
         # Rsync local backup directory to remote, mirroring contents
-        rsync -aH --progress --delete --update -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
+        rsync -aH --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
         log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning" "$LOGFILE"
     else
-        echo "$(date) - Metadata sync skipped (STORAGE_SERVER/REMOTE_META_DIR/SSH_KEY not set)"
+        echo "$(date) - Metadata sync skipped (STORAGE_SERVER/REMOTE_META_DIR/RSYNC_SSH_KEY not set)"
     fi
 
     # --- Optional depot sync ---
     if [[ "${DEPOT_SYNC_ENABLED:-false}" == "true" ]]; then
-        if [[ -n "${DEPOTS_DIR:-}" && -n "${STORAGE_SERVER:-}" && -n "${DEPOTS_REMOTE_DIR:-}" && -n "${SSH_KEY:-}" ]]; then
-            if [[ ! -f "$SSH_KEY" ]]; then
-                log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $SSH_KEY not found, cannot sync depots" "$LOGFILE" "CRITICAL"
+        if [[ -n "${DEPOTS_DIR:-}" && -n "${STORAGE_SERVER:-}" && -n "${DEPOTS_REMOTE_DIR:-}" && -n "${RSYNC_SSH_KEY:-}" ]]; then
+            if [[ ! -f "$RSYNC_SSH_KEY" ]]; then
+                log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $RSYNC_SSH_KEY not found, cannot sync depots" "$LOGFILE" "CRITICAL"
                 exit 1
             fi
 
             # Pre-create remote depot directory
-            ssh -p "${SSH_PORT}" -i "${SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
+            ssh -p "${RSYNC_SSH_PORT}" -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
-            if rsync -aH --delete --progress --update -e "ssh -p${SSH_PORT} -i ${SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
+            if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
                 log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"

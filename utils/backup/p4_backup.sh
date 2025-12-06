@@ -31,6 +31,7 @@ if (( ${#LOG_FILES[@]} > MAX_LOGS )); then
     ls -1tr "${LOG_FILES[@]}" | head -n -"$MAX_LOGS" | xargs -r rm -f
 fi
 
+#make the backup dir if it doesn't exist
 mkdir -p "$BACKUP_DIR"
 
 
@@ -63,8 +64,18 @@ mkdir -p "$BACKUP_DIR"
     
     log_and_alert "SUCCESS" "🕒 $(date)\n✔ Valid P4ROOT detected at $P4ROOT with $DB_COUNT database tables." "$LOGFILE"
 
+    # prepare gosu user if set
+    GOSU_MODIFIER=""
+    if [ -n "$P4_BACKUP_USER" ]; then
+        if docker exec "$P4D_DOCKER_INSTANCE" id "$P4_BACKUP_USER" >/dev/null 2>&1; then
+            GOSU_MODIFIER="gosu $P4_BACKUP_USER"
+        else
+            log_and_alert "FAILURE" "🕒 $(date)\n❌ Attempting to use gosu $P4_BACKUP_USER, but user does not exist" "$LOGFILE" "CRITICAL"
+        fi
+    fi
+
     # --- Run checkpoint inside container ---
-    if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jc; then
+    if docker exec "$P4D_DOCKER_INSTANCE" $GOSU_MODIFIER p4d -r "$P4ROOT" -jc; then
         log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Checkpoint created successfully" "$LOGFILE"
     else
         log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Failed to create checkpoint" "$LOGFILE" "CRITICAL"
@@ -124,7 +135,7 @@ mkdir -p "$BACKUP_DIR"
         fi
     
         # --- Perform the actual P4 verification - This can be expensive. Maybe need to do this less frequently... ---
-        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
+        if docker exec "$P4D_DOCKER_INSTANCE" $GOSU_MODIFIER p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
             CHECKPOINT_FILE_SIZE_MB=$(stat -c%s "$file")  # size in bytes
             CHECKPOINT_FILE_SIZE_MB=$((CHECKPOINT_FILE_SIZE_MB / 1048576))  # convert to MB
             log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified checkpoint $file ($CHECKPOINT_FILE_SIZE_MB MB)" "$LOGFILE"
@@ -140,7 +151,7 @@ mkdir -p "$BACKUP_DIR"
         basename=$(basename "$file")
         # The first backups you do might contain journal.0, and this will always fail as it's the live file so lets skip it
         [[ "$basename" == journal.0 ]] && continue
-        if docker exec "$P4D_DOCKER_INSTANCE" p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
+        if docker exec "$P4D_DOCKER_INSTANCE" $GOSU_MODIFIER p4d -r "$P4ROOT" -jv "$P4ROOT/$basename"; then
             JOURNAL_FILE_SIZE_MB=$(stat -c%s "$file")  # size in bytes
             JOURNAL_FILE_SIZE_MB=$((JOURNAL_FILE_SIZE_MB / 1048576))  # convert to MB
             log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Verified journal $file ($JOURNAL_FILE_SIZE_MB MB)" "$LOGFILE"

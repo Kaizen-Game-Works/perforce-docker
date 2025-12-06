@@ -36,7 +36,7 @@ chmod 600 .env
 
 Edit the new .env file to contain the details for the setup
 ```bash
-vi .env
+nano .env
 ```
 
 If you're using Swarm, make sure that the SWARM_USER matches the service user you created above 

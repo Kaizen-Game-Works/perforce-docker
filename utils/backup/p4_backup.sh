@@ -54,17 +54,10 @@ mkdir -p "$BACKUP_DIR"
         exit 1
     fi
     
-    # Check db.* files exist
+    # Check db.* files exist. This is to primarily ensure we're in the right location
     DB_COUNT=$(docker exec "$P4D_DOCKER_INSTANCE" sh -c "ls $P4ROOT/db.* 2>/dev/null | wc -l")
     if [ "$DB_COUNT" -eq 0 ]; then
         log_and_alert "FAILURE" "🕒 $(date)\n❌ No db.* files found in $P4ROOT — NOT a valid Perforce server root!" "$LOGFILE" "CRITICAL"
-        exit 1
-    fi
-    
-    # Check db.* files are non-empty
-    EMPTY_DB=$(docker exec "$P4D_DOCKER_INSTANCE" sh -c "find $P4ROOT -maxdepth 1 -name 'db.*' -size 0 2>/dev/null | wc -l")
-    if [ "$EMPTY_DB" -gt 0 ]; then
-        log_and_alert "FAILURE" "🕒 $(date)\n❌ One or more db.* files in $P4ROOT are empty — refusing to generate invalid checkpoint." "$LOGFILE" "CRITICAL"
         exit 1
     fi
     

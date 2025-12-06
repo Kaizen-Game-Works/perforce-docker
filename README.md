@@ -33,6 +33,9 @@ Change the uid/gid map, adding the 1000:1000 base assignment
 ```
 sudo nano /etc/subuid
 sudo nano /etc/subgid
+```
+And in both set
+```
 perforce:1000:1000
 ```
 
@@ -92,10 +95,13 @@ sudo mkdir -p /data/docker_volumes/swarm/data
 ```
 
 Once created, set the permissions correctly
+EITHER
 ```
 chown -R 1000:1000 /data/docker_volumes/perforce
 chown -R 1000:1000 /data/docker_volumes/swarm
-
+```
+OR (If you've setup perforce user and docktrix group above)
+```
 $ sudo chmod -R 2770 /data/docker_volumes/perforce/*
 $ sudo chown -R perforce:docktrix /data/docker_volumes/perforce/*
 ```

@@ -102,8 +102,8 @@ chown -R 1000:1000 /data/docker_volumes/swarm
 ```
 OR (If you've setup perforce user and docktrix group above)
 ```
-$ sudo chmod -R 2770 /data/docker_volumes/perforce/*
-$ sudo chown -R perforce:docktrix /data/docker_volumes/perforce/*
+sudo chmod -R 2770 /data/docker_volumes/perforce/*
+sudo chown -R perforce:docktrix /data/docker_volumes/perforce/*
 ```
 
 ## PREPARE FOR BACKUPS

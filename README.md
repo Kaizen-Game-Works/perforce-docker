@@ -24,7 +24,8 @@ Ensure you are performing these steps on the host, not in the container.
 ```
 sudo adduser perforce
 sudo groupadd docktrix
-sudo usermod -a -G docktrix ubuntu
+sudo usermod -a -G docktrix root
+sudo usermod -a -G docktrix <your_user_name>
 sudo usermod -a -G docktrix perforce
 ```
 

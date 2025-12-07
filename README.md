@@ -165,14 +165,42 @@ docker compose build --no-cache
 docker compose up -d
 ```
 
-Test it all works. 
+Test it all works. Note that the details on first startup might be set as the below if you've not created any users as part of the setup. Also note that swarm might not work at this point if you've not setup users, that's OK, we'll fix that in a moment.
+```
+p4user
+p4P@ssw0rd
+```
+If that's the case, login with that user then add whatever you need to match your .env and own usage requirements.
 
 If it fails then make whatever changes are necessary, then rebuild the container
+```
+docker compose stop
+docker rm <p4d-instance>
+docker rm <p4d-swarm>
+```
+In some cases you might want to do a full rebuild
 ```
 docker compose build --no-cache
 ```
 
-If it does work then look at the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
+## PERFORCE USERS
+If everything is working, then move on to setting up your usernames (if needed). Add these via the command line or p4admin (GUI), whichever you prefer.
+
+## SWARM USER SETUP
+If you're using swarm, you should add a new swarm specific user to match the setup in the .env file. This user must:
+1. NOT be prefixed with 'swarm-'
+2. Be a 'standard' user type (which uses up one license slot - there's no way round this)
+3. Have a secure password
+
+You also need alter the permissions table, and add the swam user as an 'admin'.
+
+It's also strongly recommended that you:
+1. Create a new group (this can not start with 'swarm-'
+2. Add the swarm user to the group
+3. Set the ticket and auth lenths to be longer than standard. If you don't do this, you may need to get new tickets every 12 hours or so, and this also interupts proper operation of perforce.
+
+## BACKUP SCRIPTS
+Now setup the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
 
 
 Test the backup script
@@ -205,6 +233,11 @@ crontab -l
 ```
 
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
+
+NOTE: IT'S STRONGLY RECOMMENDED THAT YOU PERFORM A TEST RESTORATION TO ENSURE YOUR CHECKPOINTS AND JOURNALS ARE CREATED CORRECTLY.
+
+## SECURELY BACK UP YOUR DOCKER-COMPOSE AND .ENV FILE
+At this point you might want to backup your .env and docker-compose.yaml file, in case you ever need to setup on a new server. Ensure that any backups you take are kept securely, as they contain passwords and other information that could be exploited.
 
 # Useful Info
 If you need to make changes to the users, type map, versions or anything else then you should stop the docker containers, then rebuild without caching

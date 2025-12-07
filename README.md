@@ -57,9 +57,10 @@ and adding the following
   "userns-remap": "docker-user-remap"
 }
 ```
-And now change the UID of the docker-user-remap user.
+And now change the UID of the docker-user-remap user, and the dockervolumes groups to match what's used within the container
 ```
 sudo usermod -u 1101 perforce
+sudo groupmod -g 1102 dockervolumes
 ```
 
 Reboot the server so the changes are applied.

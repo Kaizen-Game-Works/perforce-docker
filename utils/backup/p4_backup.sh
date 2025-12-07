@@ -188,9 +188,6 @@ mkdir -p "$BACKUP_DIR"
             exit 1
         fi
 
-        # Pre-create remote directory
-        ssh -p "$RSYNC_SSH_PORT" -i "$RSYNC_SSH_KEY" "$STORAGE_SERVER" "mkdir -p $REMOTE_META_DIR"
-
         # Prune local backup directories, keeping only the last MAX_REMOTE_BACKUPS
         if [[ -n "${MAX_REMOTE_BACKUPS:-}" ]]; then
             echo "$(date) - Pruning local backup directories, keeping only the last $MAX_REMOTE_BACKUPS backups"
@@ -199,6 +196,7 @@ mkdir -p "$BACKUP_DIR"
 
         # Make the remote directory, just in case it does not exist
         ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
+        
         # Rsync local backup directory to remote, mirroring contents
         rsync -aH --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
@@ -216,7 +214,7 @@ mkdir -p "$BACKUP_DIR"
             fi
 
             # Pre-create remote depot directory
-            ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
+            ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$DEPOTS_REMOTE_DIR'"
 
             if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"

@@ -22,11 +22,29 @@ The idea is to:
 
 Ensure you are performing these steps on the host, not in the container.
 ```
-sudo adduser p4user
-sudo groupadd p4group
-sudo usermod -a -G p4group root
-sudo usermod -a -G p4group <your_user_name>
-sudo usermod -a -G p4group p4user
+sudo adduser --system --group docker-user-remap
+sudo groupadd dockervolumes
+sudo usermod -aG dockervolumes root
+sudo usermod -aG dockervolumes <your_user_name>
+sudo usermod -aG dockervolumes docker-user-remap
+```
+Note that adduser command above also adds a docker-user-remap group. We're not gonna use it, but it needs to exist for the docker namespace system to work fully.
+
+Now add the user-id to the docker subuid and subgid
+```
+sudo nano /etc/subuid
+```
+and add
+```
+docker-user-remap:1000:1000
+```
+And repeat for thw subgid
+```
+sudo nano /etc/subgid
+```
+and add
+```
+docker-user-remap:1000:1000
 ```
 
 Turn on docker namespace by editing the daemon.json
@@ -36,11 +54,29 @@ sudo nano /etc/docker/daemon.json
 and adding the following
 ```
 {
-  "userns-remap": "p4user"
+  "userns-remap": "docker-user-remap"
 }
 ```
+And now change the UID of the docker-user-remap user.
+```
+sudo usermod -u 1101 perforce
+```
 
-Now reboot the server so the changes are applied.
+Reboot the server so the changes are applied.
+```
+sudo reboot
+```
+
+Now setup the data folder for the users. If you haven't already, create the data folder which will hold your volumes
+```
+sudo mkdir -p <my_data_dir>
+```
+And setup permissions
+```
+sudo chown -R docker-user-remap:dockervolumes /data
+sudo chmod -R 2770 /data
+sudo chmod g+s /data
+```
 
 
 ## Additional Setup
@@ -79,19 +115,20 @@ sudo mkdir -p /data/docker_volumes/perforce/typemap
 sudo mkdir -p /data/docker_volumes/swarm/data
 ```
 
+
+
 Now copy your typemap file into the typemap volume. Note that even if you are using one from this repo, it must be copied out of the p4-typemap folder and into here. If you don't want to setup a typemap, skip this step and also ensure your docker-compose.yaml has the typemap option set to false.
 ```
 cp <my_typemap.txt> /data/docker_volumes/perforce/typemap/<my_typemap.txt>
 ```
 
-Once created, set the permissions correctly. Note we're using 100000:100000 to work correctly with the namespace we setup above. If you're using root, 1000:1000 will work
+If you've performed the user setup above, make sure these folders have the group 'dockervolumes' group and if not, assign it
 ```
-chown -R 100000:p4group /data/docker_volumes/perforce
+sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes
 sudo chmod -R 2770 /data/docker_volumes/perforce
-
-chown -R 100000:p4group /data/docker_volumes/swarm
-sudo chmod -R 2770 /data/docker_volumes/swarm
 ```
+
+If you're not using the user setup above, then check the permissions look correct for your case.
 
 ## PREPARE FOR BACKUPS
 

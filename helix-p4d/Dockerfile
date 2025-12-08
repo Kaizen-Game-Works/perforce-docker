@@ -22,7 +22,7 @@ RUN apt-get update \
 # over the original maintainer
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive \
-    apt-get -y install rsync \
+    apt-get -y install rsync openssh-client \
  && rm -rf /var/lib/apt/lists/*
  
 # make syre we have a home dir for user perforce

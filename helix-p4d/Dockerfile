@@ -17,6 +17,28 @@ RUN apt-get update \
  && update-alternatives --install /usr/bin/editor editor /usr/bin/vi 1000 \
  && rm -rf /var/lib/apt/lists/*
 
+# Added by Kaizen to ensure we have consisten UIDs
+# make syre we have a home dir for user perforce
+RUN mkdir -p /opt/perforce && chown 101:102 /opt/perforce
+
+# Create the "perforce" group first
+RUN groupadd --gid 102 perforce
+
+# Then create the user with attributes
+RUN useradd \
+    --uid 101 \
+    --gid 102 \
+    --create-home \
+    --home-dir /opt/perforce \
+    --shell /bin/bash \
+    -c "P4 Admin" \
+    perforce
+
+# Set permissions
+RUN mkdir -p /data && chown -R 101:102 /data
+RUN chown -R 101:102 /opt/perforce
+
+#end added by Kaizen
 
 ARG HELIX_P4D_VERSION
 ENV HELIX_P4D_VERSION=${HELIX_P4D_VERSION}

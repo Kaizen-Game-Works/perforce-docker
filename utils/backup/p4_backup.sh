@@ -182,7 +182,9 @@ mkdir -p "$BACKUP_DIR"
     }
 
     # --- Sync to remote storage ---
-    if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" && -n "${RSYNC_SSH_KEY:-}" ]]; then
+    if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" ]]; then
+        RSYNC_SSH_KEY=$RSYNC_KEY_PATH/$RSYNC_KEY_FILE
+        
         if [[ ! -f "$RSYNC_SSH_KEY" ]]; then
             log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $RSYNC_SSH_KEY not found, cannot sync metadata" "$LOGFILE" "CRITICAL"
             exit 1
@@ -216,7 +218,10 @@ mkdir -p "$BACKUP_DIR"
             # Pre-create remote depot directory
             ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$DEPOTS_REMOTE_DIR'"
 
-            if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
+            #if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
+            
+            # we need to run this rsync in the container to ensure that all the files can be seen
+            if docker exec "$P4D_DOCKER_INSTANCE" $GOSU_MODIFIER rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no" "${DEPOTS_DIR}/" "${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/"
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
                 log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"

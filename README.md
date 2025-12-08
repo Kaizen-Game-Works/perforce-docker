@@ -145,11 +145,12 @@ And now setup permissions
 chown -R 100000:p4group /data/perforce_backup
 ```
 
-If you're using the rsync option to backup all data within perforce (warning - this could be A LOT of data), then you might need to supply a SSH key for rsync backup. Copy the private key to some directory as specified in the .env file and ensure the correct permissions are set. Make sure that this file is still kept securely.
+If you're using the rsync option to backup all data within perforce (warning - this could be A LOT of data), then you might need to supply a SSH key for rsync backup. Copy the private key to some directory as specified in the .env file and docker-compose volumes, and ensure the correct permissions are set. Make sure that this file is still kept securely.
 ```
-chmod 600 <your_ssh_private_key_file>
-chown <youruser> <your_ssh_private_key_file>
-chgrp <youruser> <your_ssh_private_key_file>
+sudo mkdir -p /srv/docker-secrets/perforce
+sudo chmod 700 /srv/docker-secrets/perforce
+sudo cp <your_file> /srv/docker-secrets/perforce/<your_file>
+chmod 600 /srv/docker-secrets/perforce/<your_file>
 ```
 
 If you're using S3 backup, install the offical S3 CLI (AWSCLI) and follow the setup instructions to connect to your bucket. Ensure that you have entered the correct values in the .env file

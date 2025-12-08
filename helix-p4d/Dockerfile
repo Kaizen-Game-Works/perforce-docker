@@ -18,6 +18,13 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Added by Kaizen to ensure we have consisten UIDs
+# Install rsync - doing this as it's own step just to keep it clear what's been added
+# over the original maintainer
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive \
+    apt-get -y install rsync \
+ && rm -rf /var/lib/apt/lists/*
+ 
 # make syre we have a home dir for user perforce
 RUN mkdir -p /opt/perforce && chown 101:102 /opt/perforce
 

@@ -13,6 +13,8 @@ LOG_DIR="$P4_BACKUP_DIR_LOGS"
 LOGFILE="$LOG_DIR/backup_$TIMESTAMP.log"
 P4ROOT="/data/master"
 
+RSYNC_SSH_KEY=$RSYNC_KEY_DIR/$RSYNC_KEY_FILE
+
 source $SCRIPT_DIR/../logger/logger.sh
 
 # --- Prune old backup logs, keeping only the last 100 ---
@@ -183,8 +185,6 @@ mkdir -p "$BACKUP_DIR"
 
     # --- Sync to remote storage ---
     if [[ -n "${STORAGE_SERVER:-}" && -n "${REMOTE_META_DIR:-}" ]]; then
-        RSYNC_SSH_KEY=$RSYNC_KEY_PATH/$RSYNC_KEY_FILE
-        
         if [[ ! -f "$RSYNC_SSH_KEY" ]]; then
             log_and_alert "FAILURE" "🕒 $(date)\n❌ SSH key $RSYNC_SSH_KEY not found, cannot sync metadata" "$LOGFILE" "CRITICAL"
             exit 1

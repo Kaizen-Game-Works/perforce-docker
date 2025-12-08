@@ -216,12 +216,12 @@ mkdir -p "$BACKUP_DIR"
             fi
 
             # Pre-create remote depot directory
-            ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$DEPOTS_REMOTE_DIR'"
+            ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p $DEPOTS_REMOTE_DIR"
 
             #if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
             
             # we need to run this rsync in the container to ensure that all the files can be seen
-            if docker exec $P4D_DOCKER_INSTANCE $GOSU_MODIFIER rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no" "${DEPOTS_DIR}/" "${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/"; then
+            if docker exec $P4D_DOCKER_INSTANCE $GOSU_MODIFIER rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no" ${DEPOTS_DIR}/ ${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/; then
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
                 log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"

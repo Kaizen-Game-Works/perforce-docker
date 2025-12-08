@@ -226,7 +226,8 @@ mkdir -p "$BACKUP_DIR"
             
             # we need to run this rsync in the container to ensure that all the files can be seen
             # run this as root (no gosu user) to make sure it can access both the data, and the ssh key
-            log_and_alert "SUCCESS" "docker exec $P4D_DOCKER_INSTANCE sh -c \"rsync -aH --delete --progress --update -e 'ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no' '${DEPOTS_DIR}/' '${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/'" "$LOGFILE"
+            log_and_alert "SUCCESS" "docker exec $P4D_DOCKER_INSTANCE sh -c \"rsync -aH --delete --progress --update -e 'ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no' '${DEPOTS_DIR}/' '${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/'\"" "$LOGFILE"
+
             if docker exec $P4D_DOCKER_INSTANCE sh -c "rsync -aH --delete --progress --update -e 'ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no' '${DEPOTS_DIR}/' '${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/'"; then
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else

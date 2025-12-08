@@ -61,6 +61,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Added by Kaizen to install apps needed for backup processors
+# We so this here to prevent clases with users and group id's which occur if
+# openssh-client is installed earlier in the process
 
 # Install rsync - doing this as it's own step just to keep it clear what's been added
 # over the original maintainer

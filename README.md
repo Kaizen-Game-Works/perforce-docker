@@ -150,7 +150,8 @@ If you're using the rsync option to backup all data within perforce (warning - t
 sudo mkdir -p /srv/docker-secrets/perforce
 sudo chmod 700 /srv/docker-secrets/perforce
 sudo cp <your_file> /srv/docker-secrets/perforce/<your_file>
-chmod 600 /srv/docker-secrets/perforce/<your_file>
+sudo chmod 600 /srv/docker-secrets/perforce/<your_file>
+sudo chown docker-user-remap:dockervolumes /srv/docker-secrets/perforce/<your_file>
 ```
 
 If you're using S3 backup, install the offical S3 CLI (AWSCLI) and follow the setup instructions to connect to your bucket. Ensure that you have entered the correct values in the .env file

@@ -18,12 +18,6 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Added by Kaizen to ensure we have consisten UIDs
-# Install rsync - doing this as it's own step just to keep it clear what's been added
-# over the original maintainer
-RUN apt-get update \
- && DEBIAN_FRONTEND=noninteractive \
-    apt-get -y install rsync openssh-client \
- && rm -rf /var/lib/apt/lists/*
  
 # make syre we have a home dir for user perforce
 RUN mkdir -p /opt/perforce && chown 101:102 /opt/perforce
@@ -66,7 +60,17 @@ RUN apt-get update \
         helix-swarm-triggers="${HELIX_SWARM_VERSION}"-* \
  && rm -rf /var/lib/apt/lists/*
 
+# Added by Kaizen to install apps needed for backup processors
 
+# Install rsync - doing this as it's own step just to keep it clear what's been added
+# over the original maintainer
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive \
+    apt-get -y install rsync openssh-client \
+ && rm -rf /var/lib/apt/lists/*
+
+#end added by Kaizen
+ 
 ENV P4PORT=ssl:1666
 ENV P4USER=p4admin
 ENV P4PASSWD=P@ssw0rd

@@ -247,7 +247,7 @@ docker rm <p4d-swarm>
 ```
 In some cases you might want to do a full rebuild
 ```
-docker compose build --no-cache
+./build.sh
 ```
 
 ## PERFORCE USERS
@@ -301,20 +301,23 @@ crontab -l
 
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
 
-NOTE: IT'S STRONGLY RECOMMENDED THAT YOU PERFORM A TEST RESTORATION TO ENSURE YOUR CHECKPOINTS AND JOURNALS ARE CREATED CORRECTLY.
+NOTE: IT'S STRONGLY RECOMMENDED THAT YOU PERFORM A TEST RESTORATION TO ENSURE YOUR CHECKPOINTS AND JOURNALS ARE CREATED CORRECTLY. IT'S VERY EASY TO MAKE A MISTAKE SO CHECKING, VERIFYING AND MONITORING IS ESSENTIAL!
 
 ## SECURELY BACK UP YOUR DOCKER-COMPOSE AND .ENV FILE
 At this point you might want to backup your .env and docker-compose.yaml file, in case you ever need to setup on a new server. Ensure that any backups you take are kept securely, as they contain passwords and other information that could be exploited.
 
-# Useful Info
+# USEFUL INFO
 If you need to make changes to the users, type map, versions or anything else then you should stop the docker containers, then rebuild without caching
 ```
 docker ps <---- see running instances
-docker compose stop <swarm-instance-name>
-docker compose stop <p4d-instance-name>
-docker compose build --no-cache
+docker compose up -d <---- ommit the d flag if you want to see what's happening in startup
+docker compose stop <id>
+docker rm <id> <---- remove a container, it doesn't remove the data
+docker compose build --no-cache <---- recommend using the ./build.sh script instead of this
 docker exec -it <instance-name> bin/bash <---This will let you use the cli within the docker container
 docker exec -e P4CHARSET=utf8 -it <instance-name> bin/bash <--- as above, but forcing unicode
+docker image ls <---- See images you've build
+docker image rm <id> <----- remove any image
 ```
 
 # perforce-docker

@@ -8,24 +8,67 @@ This has been tested on Ubuntu 24.04 LTS only!
 This is based on the excellent hawkmoth-studio/perforce-docker repo, but with some additions.
 1. Providing working docker container setups
 2. The use of a .env file to store the setup and secrets
-3. Adding backup scripts that will help journal + checkpoint, verify those backups, export those backups to S3, perform full rsync backups of all data, and report progress to slack and new-relic
+3. Support running docker as a non-root user on the host
+4. Provide a build script which will allow you to update the images to get new versions of p4d / swarm
+5. Adding backup scripts that will help journal + checkpoint, verify those backups, export those backups to S3, perform full rsync backups of all data, and report progress to slack and new-relic
 
-## User Setup
-If your running docker as a non-root user, it's likely that the process of checkpoint, journaling and rotating will cause p4 to shutdown due to assigning incorrect permissions to journal files. To solve this, we need to do some user remapping and namespacing. If you plan on running as root, you can probably ignore this section.
+NOTE: Swarm is now called Code Review, but we're gonna keep calling it Swarm.
+
+## PREREQUISITES
+This setup assumes:
+1. You're going to run as a non-root user, and that you've already setup a non-root user on your server, and you can run docker as a non-root user.
+2. You've installed docker and proven it works.
+3. You don't have any linux user or group uid on 101 or 103 (see warning below)
+
+## WARNINGS
+The original hawkmoth depots put the interal docker "perforce" user and group on 101 and 102 respectively. To ensure compatability, we are continuing to use this same setup. You are welcome to change the UIDs if you need to (within helix-p4d/Dockerfile), however note that you will also need modify existing permissions if you have any existing data.
+
+If you get a UID mismatch between the host and the container, you may lock up perforce when journaling - see the User Setup section for details. Ensure you test checkpointing and journaling fully before using this in production.
+
+This setup relies on using docker namespaces (userns-remap). This can cause problems for some docker containers or build scripts. It's recommended you check your existing docker containers to see if using namespaces will cause problems, and if you're able to work around them. Sometimes that can be done by forcing the use of host in the docker-container, or build scripts.
+
+We are not providing pre-built images for these builds. The build.sh script will build the images locally for you. This is to ensure you've got flexibility to do what you want without waiting for us to maintain the image.
+
+# SETUP
+Clone this repo to some location on your server
+```
+mkdir -p /srv/docker-containers
+git clone https://github.com/Kaizen-Game-Works/perforce-docker
+```
+
+You should also make a new group on your server called dockervolumes
+```
+sudo groupadd dockervolumes
+```
+
+Now add users to the group
+```
+sudo usermod -aG dockervolumes root
+sudo usermod -aG dockervolumes <your_non_root_linux_user>
+```
+Repeat for any other users you might want to add to have group access to your dockervolumes
+
+Now create a folder where you would like your docker volumes to live. In this example we use data/docker_volumes
+```
+mkdir -p /data/docker_volumes
+sudo chgrp -R dockervolumes /data/docker_volumes
+sudo chmod -R 775 /data/docker_volumes
+sudo chmod g+s /data/docker_volumes
+```
+
+## USER SETUP
+When running as a non-root docker user, t's likely that the process of checkpoint, journaling and rotating will cause p4 to shutdown due to assigning incorrect permissions to journal files. To solve this, we need to do some user remapping and namespacing.
 
 The idea is to:
-1. Create a "perforce" user that will be used on the host as a proxy for the p4d user used on the container.
-2. Create a user group to hold our ubuntu user as well as the new perforce one.
-3. Configure the new perforce user to be used by Docker namespacing
+1. Create a "docker-user-remap" user that will be used on the host as a proxy for the p4d user used on the container.
+2. Add the user to the dockervolumes group we created before to hold our non-root user as well as the new docker-user-remap user we'll create below.
+3. Configure the new docker-user-remap user to be used by Docker namespacing
 4. Renumber the user to match what the P4 user will be - for the docker instance, it has an internal user that runs the p4d service that ends up being UID 101 - so we have to use the base ID (1000) + this internal ID (101) as our host’s proxy user
 
 
 Ensure you are performing these steps on the host, not in the container.
 ```
 sudo adduser --system --group docker-user-remap
-sudo groupadd dockervolumes
-sudo usermod -aG dockervolumes root
-sudo usermod -aG dockervolumes <your_user_name>
 sudo usermod -aG dockervolumes docker-user-remap
 ```
 Note that adduser command above also adds a docker-user-remap group. We're not gonna use it, but it needs to exist for the docker namespace system to work fully.
@@ -38,6 +81,7 @@ and add
 ```
 docker-user-remap:1000:1000
 ```
+
 And repeat for thw subgid
 ```
 sudo nano /etc/subgid
@@ -56,6 +100,7 @@ and adding the following
 {
   "userns-remap": "docker-user-remap"
 }
+
 ```
 And now change the UID of the docker-user-remap user, and the dockervolumes groups to match what's used within the container
 ```
@@ -68,21 +113,25 @@ Reboot the server so the changes are applied.
 sudo reboot
 ```
 
-Now setup the data folder for the users. If you haven't already, create the data folder which will hold your volumes
+If you can't reboot the server for whatever reason, instead you should logout and log back in again, and also restart the docker service. If you don't, user permissions won't work and the docker namespacing won't be correct.
+
+Finally, we need to make sure that we setup the permissions for the perforce docker volumes on the host
+
+Now setup the data folder for the users. If you haven't already, create the data folder which will hold your volumes. Customise the directory as needed
 ```
-sudo mkdir -p <my_data_dir>
-```
-And setup permissions
-```
-sudo chown -R docker-user-remap:dockervolumes /data
-sudo chmod -R 2770 /data
-sudo chmod g+s /data
+sudo mkdir -p /data/docker_volumes/perforce/data
+sudo mkdir -p /data/docker_volumes/perforce/typemap
+sudo mkdir -p /data/docker_volumes/swarm/data
+sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes/perforce/
+sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes/swarm/
+sudo chmod -R 2770 /data/docker_volumes/perforce/
+sudo chmod -R 2770 /data/docker_volumes/swarm/
+sudo chmod g+s /data/docker_volumes/perforce/
+sudo chmod g+s /data/docker_volumes/swarm/
 ```
 
 
-## Additional Setup
-
-It's best to perform some user remapping so that we have stability inside and outside of the container
+## SETUP DOCKER-COMPOSE AND ENVIRONMENT
 
 Create your docker-compose.yaml file
 ```
@@ -96,7 +145,7 @@ nano docker-compose.yaml
 
 Setup the options as required, with particular focus on the volumes and ports. More information about the docker-compose can be found later in this document.
 
-Make the .env file
+Make the .env file. This will hold variables which will help setup docker, as well as the included backup scripts.
 ```bash
 cp sample.env .env
 chmod 600 .env
@@ -107,45 +156,49 @@ Edit the new .env file to contain the details for the setup
 nano .env
 ```
 
-If you're using Swarm, make sure that the SWARM_USER matches the service user you created above 
-
-Create the directory structure as specified in the docker-compose.yml file (e.g. /data/docker_volumes/perforce/data). Do this for both Perforce and Swarm (if deploying swarm)
-```
-sudo mkdir -p /data/docker_volumes/perforce/data
-sudo mkdir -p /data/docker_volumes/perforce/typemap
-sudo mkdir -p /data/docker_volumes/swarm/data
-```
-
-
+Note that if you don't have any existing users, just use whatever you want for both the perforce and the swarm usernames / passwords (but make sure they're secure). We'll deal with adding swarm users later.
 
 Now copy your typemap file into the typemap volume. Note that even if you are using one from this repo, it must be copied out of the p4-typemap folder and into here. If you don't want to setup a typemap, skip this step and also ensure your docker-compose.yaml has the typemap option set to false.
 ```
 cp <my_typemap.txt> /data/docker_volumes/perforce/typemap/<my_typemap.txt>
 ```
 
-If you've performed the user setup above, make sure these folders have the group 'dockervolumes' group and if not, assign it
+Make sure the typemap will be readable by the container
 ```
-sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes
-sudo chmod -R 2770 /data/docker_volumes/perforce
+sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes/perforce/typemap/<my_typemap.txt>
 ```
-
-If you're not using the user setup above, then check the permissions look correct for your case.
 
 ## PREPARE FOR BACKUPS
-
-Ensure that the scripts in the utils folder have the execution bit set.
 
 Setup folders to match what's set in your .env script for the P4_BACKUP_DIR_DATA and P4_BACKUP_DIR_LOGS values
 ```
 mkdir -p /data/perforce_backup/data
 mkdir -p /data/perforce_backup/logs
 ```
-And now setup permissions
+
+The backup scripts support multiple options for backup including:
+1. Backing up journals, checkpoints, serverid and licenses files to S3
+2. Backing up journals, checkpoints, serverid and licenses files to another remote location (via rsync and ssh)
+3. Backing up the whole depot to a remote location (via rsync and ssh)
+
+### BACKUP TO S3
+Note that this is only backing up journals, checkpoints, serverid and licenses files, not the full depot! Don't rely on this alone and ensure that you have some way to restore all the depot in case of disaster
+
+You'll need to have an S3 bucket setup, and a user which can write to that bucket via AWSCLI. We're not going to cover all that here, but there are lots of guides available to help. 
+
+Once you have setup the bucket, download and install AWSCLI to your server and run configure to perform the required setup
 ```
-chown -R 100000:p4group /data/perforce_backup
+aws configure
 ```
 
-If you're using the rsync option to backup all data within perforce (warning - this could be A LOT of data), then you might need to supply a SSH key for rsync backup. Copy the private key to some directory as specified in the .env file and docker-compose volumes, and ensure the correct permissions are set. Make sure that this file is still kept securely.
+Assuming you have provided valid information and enabled S3 backups in the .env file, this should now work.
+
+### BACKUP TO REMOTE LOCATION
+The backup scripts let you back up both the journals, checkpoints, serverid and licenses files, and the whole depot. You can choose to do non of these, either one or both. If you're using S3 as described above you don't really need to also bakckup the checkpoints / journals etc here, but it doesn't hurt to be careful.
+
+If you're using the rsync option to backup all data within perforce then this could be A LOT of data. Be careful about any egress limits or costs you might have!
+
+The script assums rsync requires a ssh key. Copy the private key to some directory as specified in the .env file and docker-compose volumes, and ensure the correct permissions are set. Make sure that this file is still kept securely.
 ```
 sudo mkdir -p /srv/docker-secrets/perforce
 sudo chmod 700 /srv/docker-secrets/perforce
@@ -154,17 +207,28 @@ sudo chmod 600 /srv/docker-secrets/perforce/<your_file>
 sudo chown docker-user-remap:dockervolumes /srv/docker-secrets/perforce/<your_file>
 ```
 
-If you're using S3 backup, install the offical S3 CLI (AWSCLI) and follow the setup instructions to connect to your bucket. Ensure that you have entered the correct values in the .env file
+Make sure that all other the variables are setup correctly in the .env for your needs.
 
-If you want the logs to report to Slack, setup a Slack bot for your account and setup the bot-token etc within the .env file
+### BACKUP REPORTS AND LOGS
 
-## FIREWALL SETUP
-Open the relevent ports in your firewall (see docker-compose.yml for the correct ports)
+The backup script will output logs to the location you've specified, but you can also choose to send them to Slack and New Relic. I like to send them to slack because I use it every day, and it's a reliable way to see any issues. If you want the logs to report to Slack, setup a Slack bot for your account, give it posting permission to your chosen channel and setup the bot-token etc within the .env file. Instructions for all this can be found in the slack documentation.
 
-## START THE DOCKER CONTAINER
-Bring up the docker container
+### FINAL BACKUP WARNING
+
+You MUST do your own tests to ensure your backup and restoration process works. It's very easy to accidentally miss files, or for the checkpoints to be performed incorrectly due to a dir mismatch, or for syncronisation to fail so it's essential you test and monitor it! Do not assume the provided scripts will just work!
+
+# FIREWALL SETUP
+Open the relevent ports in your firewall. Make sure you open the right ports as you may have chosen to use non-standard ones.
+
+# START THE DOCKER CONTAINER
+The first thing we need to do is build the images. You need to build because we don't provide the images so that you are able to maintain your own setups.
 ```
-docker compose build --no-cache
+./build.sh
+```
+The building may take a while, so be patient.
+
+Once it's done, bring up the docker container
+```
 docker compose up -d
 ```
 

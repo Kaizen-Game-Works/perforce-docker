@@ -201,8 +201,8 @@ mkdir -p "$BACKUP_DIR"
         #docker exec $P4D_DOCKER_INSTANCE $GOSU_MODIFIER ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$REMOTE_META_DIR'"
         
         # Rsync local backup directory to remote, mirroring contents
-        rsync -aH --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
-        #docker exec $P4D_DOCKER_INSTANCE $GOSU_MODIFIER rsync -aH --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
+        rsync -a --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
+        #docker exec $P4D_DOCKER_INSTANCE $GOSU_MODIFIER rsync -a --progress --delete --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$BACKUP_BASE_DIR/" "$STORAGE_SERVER:$REMOTE_META_DIR/"
 
 
         log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Metadata backup synced to $STORAGE_SERVER:$REMOTE_META_DIR/ with automatic pruning" "$LOGFILE"
@@ -222,11 +222,11 @@ mkdir -p "$BACKUP_DIR"
             ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$DEPOTS_REMOTE_DIR'"
             # docker exec $P4D_DOCKER_INSTANCE ssh -p${RSYNC_SSH_PORT} -i "${RSYNC_SSH_KEY}" "$STORAGE_SERVER" "mkdir -p '$DEPOTS_REMOTE_DIR'"
 
-            #if rsync -aH --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
+            #if rsync -a --delete --progress --update -e "ssh -p${RSYNC_SSH_PORT} -i ${RSYNC_SSH_KEY}" "$DEPOTS_DIR/" "$STORAGE_SERVER:$DEPOTS_REMOTE_DIR/"; then
             
             # we need to run this rsync in the container to ensure that all the files can be seen
             # run this as root (no gosu user) to make sure it can access both the data, and the ssh key
-            if docker exec $P4D_DOCKER_INSTANCE sh -c "rsync -aH --delete --progress --update -e 'ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no' '${P4ROOT}/' '${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/'"; then
+            if docker exec $P4D_DOCKER_INSTANCE sh -c "rsync -a --delete --progress --update -e 'ssh -p${RSYNC_SSH_PORT} -i /secrets/${RSYNC_SSH_KEY_FILE} -o StrictHostKeyChecking=no' '${P4ROOT}/' '${STORAGE_SERVER}:${DEPOTS_REMOTE_DIR}/'"; then
                 log_and_alert "SUCCESS" "🕒 $(date)\n✔ Perforce Depots rsynced to $STORAGE_SERVER:$DEPOTS_REMOTE_DIR" "$LOGFILE"
             else
                 log_and_alert "FAILURE" "🕒 $(date)\n❌ Perforce Depot rsync to $STORAGE_SERVER FAILED" "$LOGFILE" "CRITICAL"

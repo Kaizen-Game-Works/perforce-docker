@@ -262,11 +262,11 @@ If you're using the rsync option to backup all data within perforce then this co
 
 The script assums rsync requires a ssh key. Copy the private key to some directory as specified in the .env file and docker-compose volumes, and ensure the correct permissions are set. Make sure that this file is still kept securely.
 ```
-sudo mkdir -p /srv/docker-secrets/perforce
-sudo chmod 700 /srv/docker-secrets/perforce
-sudo cp <your_file> /srv/docker-secrets/perforce/<your_file>
-sudo chmod 600 /srv/docker-secrets/perforce/<your_file>
-sudo chown docker-user-remap:dockervolumes /srv/docker-secrets/perforce/<your_file>
+sudo mkdir -p /etc/my-secrets-folder/perforce
+sudo chmod 700 /etc/my-secrets-folder/perforce
+sudo cp <your_file> /etc/my-secrets-folder/perforce/<your_file>
+sudo chmod 600 /etc/my-secrets-folder/perforce/<your_file>
+sudo chown docker-user-remap:dockervolumes /etc/my-secrets-folder/perforce/<your_file>
 ```
 
 Make sure that all other the variables are setup correctly in the .env for your needs.

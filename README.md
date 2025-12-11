@@ -168,7 +168,69 @@ Make sure the typemap will be readable by the container
 sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes/perforce/typemap/<my_typemap.txt>
 ```
 
-## PREPARE FOR BACKUPS
+# FIREWALL SETUP
+Open the relevent ports in your firewall. Make sure you open the right ports as you may have chosen to use non-standard ones.
+
+# START THE DOCKER CONTAINER
+The first thing we need to do is build the images. You need to build because we don't provide the images so that you are able to maintain your own setups.
+```
+./build.sh
+```
+The building may take a while, so be patient.
+
+Once it's done, bring up the docker container
+```
+docker compose up -d
+```
+
+Test it all works. Note that the details on first startup might be set as the below if you've not created any users as part of the setup. Also note that swarm might not work at this point if you've not setup users, that's OK, we'll fix that in a moment.
+```
+p4user
+p4P@ssw0rd
+```
+If that's the case, login with that user then add whatever you need to match your .env and own usage requirements.
+
+If it fails then make whatever changes are necessary, then rebuild the container
+```
+docker compose stop
+docker rm <p4d-instance>
+docker rm <p4d-swarm>
+```
+In some cases you might want to do a full rebuild
+```
+./build.sh
+```
+
+# PERFORCE USERS
+If everything is working, then move on to setting up your usernames (if needed). Add these via the command line or p4admin (GUI), whichever you prefer.
+
+# SWARM SETUP
+If you're using swarm, you should add a new swarm specific user to match the setup in the .env file. This user must:
+1. NOT be prefixed with 'swarm-'
+2. Be a 'standard' user type (which uses up one license slot - there's no way round this)
+3. Have a secure password
+
+You also need alter the permissions table, and add the swam user as an 'admin'.
+
+It's also strongly recommended that you:
+1. Create a new group (this can not start with 'swarm-'
+2. Add the swarm user to the group
+3. Set the ticket and auth lenths to be longer than standard. If you don't do this, you may need to get new tickets every 12 hours or so, and this also interupts proper operation of perforce.
+
+Swarm may not configure itself properly on first startup. If you don't have a .swarm depot, then it's not setup. To fix this follow these instructions to access the swarm container and setup.
+```
+docker exec -it perforce-swarm-1 bin/bash
+/opt/perforce/swarm/sbin/configure-swarm.sh
+exit
+```
+
+Once that's complete, now access the perforce container and install the triggers
+```
+docker exec -it perforce-p4d-1 bin/bash
+FINISH.....
+```
+
+# BACKUPS
 
 Setup folders to match what's set in your .env script for the P4_BACKUP_DIR_DATA and P4_BACKUP_DIR_LOGS values
 ```
@@ -210,63 +272,9 @@ sudo chown docker-user-remap:dockervolumes /srv/docker-secrets/perforce/<your_fi
 Make sure that all other the variables are setup correctly in the .env for your needs.
 
 ### BACKUP REPORTS AND LOGS
-
 The backup script will output logs to the location you've specified, but you can also choose to send them to Slack and New Relic. I like to send them to slack because I use it every day, and it's a reliable way to see any issues. If you want the logs to report to Slack, setup a Slack bot for your account, give it posting permission to your chosen channel and setup the bot-token etc within the .env file. Instructions for all this can be found in the slack documentation.
 
-### FINAL BACKUP WARNING
-
-You MUST do your own tests to ensure your backup and restoration process works. It's very easy to accidentally miss files, or for the checkpoints to be performed incorrectly due to a dir mismatch, or for syncronisation to fail so it's essential you test and monitor it! Do not assume the provided scripts will just work!
-
-# FIREWALL SETUP
-Open the relevent ports in your firewall. Make sure you open the right ports as you may have chosen to use non-standard ones.
-
-# START THE DOCKER CONTAINER
-The first thing we need to do is build the images. You need to build because we don't provide the images so that you are able to maintain your own setups.
-```
-./build.sh
-```
-The building may take a while, so be patient.
-
-Once it's done, bring up the docker container
-```
-docker compose up -d
-```
-
-Test it all works. Note that the details on first startup might be set as the below if you've not created any users as part of the setup. Also note that swarm might not work at this point if you've not setup users, that's OK, we'll fix that in a moment.
-```
-p4user
-p4P@ssw0rd
-```
-If that's the case, login with that user then add whatever you need to match your .env and own usage requirements.
-
-If it fails then make whatever changes are necessary, then rebuild the container
-```
-docker compose stop
-docker rm <p4d-instance>
-docker rm <p4d-swarm>
-```
-In some cases you might want to do a full rebuild
-```
-./build.sh
-```
-
-## PERFORCE USERS
-If everything is working, then move on to setting up your usernames (if needed). Add these via the command line or p4admin (GUI), whichever you prefer.
-
-## SWARM USER SETUP
-If you're using swarm, you should add a new swarm specific user to match the setup in the .env file. This user must:
-1. NOT be prefixed with 'swarm-'
-2. Be a 'standard' user type (which uses up one license slot - there's no way round this)
-3. Have a secure password
-
-You also need alter the permissions table, and add the swam user as an 'admin'.
-
-It's also strongly recommended that you:
-1. Create a new group (this can not start with 'swarm-'
-2. Add the swarm user to the group
-3. Set the ticket and auth lenths to be longer than standard. If you don't do this, you may need to get new tickets every 12 hours or so, and this also interupts proper operation of perforce.
-
-## BACKUP SCRIPTS
+## BACKUP TEST AND SCHEDULE
 Now setup the backup and verify scripts, and the .env you've created to see what services you need to install in order to support proper backups. Setup those services (such as awscli, ssh keys etc).
 
 
@@ -282,13 +290,13 @@ cd utils/verify
 ./p4_verify.sh
 ```
 
-Now schedule backups to choose a time to perform the P4 backups
+Now schedule backups to choose a time to perform the P4 backups. Note that this script is setup configured to only offer nightly builds. Customise as needed, or just inspect the script and setup your own cron job if you don't want it once per night.
 ```bash
 cd utils/backup
 ./schedule_backup
 ```
 
-And now run schedule verify to choose a time to perform the P4 verify
+And now run schedule verify to choose a time to perform the P4 verify. Note that this script is setup configured to only offer weekly verifications. Customise as needed, or just inspect the script and setup your own cron job if you don't want it once per week.
 ```bash
 cd utils/verify
 ./schedule_verify
@@ -301,9 +309,10 @@ crontab -l
 
 Perform any additional setup needed, such as installing aws cli, setting up ssh keys etc
 
-NOTE: IT'S STRONGLY RECOMMENDED THAT YOU PERFORM A TEST RESTORATION TO ENSURE YOUR CHECKPOINTS AND JOURNALS ARE CREATED CORRECTLY. IT'S VERY EASY TO MAKE A MISTAKE SO CHECKING, VERIFYING AND MONITORING IS ESSENTIAL!
+#FINAL BACKUP WARNING
+You MUST do your own tests to ensure your backup and restoration process works. It's very easy to accidentally miss files, or for the checkpoints to be performed incorrectly due to a dir mismatch, or for syncronisation to fail so it's essential you test and monitor it! Do not assume the provided scripts will just work!
 
-## SECURELY BACK UP YOUR DOCKER-COMPOSE AND .ENV FILE
+# SECURELY BACK UP YOUR DOCKER-COMPOSE AND .ENV FILE
 At this point you might want to backup your .env and docker-compose.yaml file, in case you ever need to setup on a new server. Ensure that any backups you take are kept securely, as they contain passwords and other information that could be exploited.
 
 # USEFUL INFO

@@ -1,5 +1,5 @@
-ARG HELIX_P4D_VERSION=2025.1
-ARG HELIX_SWARM_VERSION=2025.1
+ARG HELIX_P4D_VERSION=2025.2
+ARG HELIX_SWARM_VERSION=2025.4
 
 
 FROM ubuntu:24.04 AS helix-base
@@ -17,6 +17,29 @@ RUN apt-get update \
  && update-alternatives --install /usr/bin/editor editor /usr/bin/vi 1000 \
  && rm -rf /var/lib/apt/lists/*
 
+# Added by Kaizen to ensure we have consisten UIDs
+ 
+# make syre we have a home dir for user perforce
+RUN mkdir -p /opt/perforce && chown 101:102 /opt/perforce
+
+# Create the "perforce" group first
+RUN groupadd --gid 102 perforce
+
+# Then create the user with attributes
+RUN useradd \
+    --uid 101 \
+    --gid 102 \
+    --create-home \
+    --home-dir /opt/perforce \
+    --shell /bin/bash \
+    -c "P4 Admin" \
+    perforce
+
+# Set permissions
+RUN mkdir -p /data && chown -R 101:102 /data
+RUN chown -R 101:102 /opt/perforce
+
+#end added by Kaizen
 
 ARG HELIX_P4D_VERSION
 ENV HELIX_P4D_VERSION=${HELIX_P4D_VERSION}
@@ -37,7 +60,19 @@ RUN apt-get update \
         helix-swarm-triggers="${HELIX_SWARM_VERSION}"-* \
  && rm -rf /var/lib/apt/lists/*
 
+# Added by Kaizen to install apps needed for backup processors
+# We so this here to prevent clases with users and group id's which occur if
+# openssh-client is installed earlier in the process
 
+# Install rsync - doing this as it's own step just to keep it clear what's been added
+# over the original maintainer
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive \
+    apt-get -y install rsync openssh-client \
+ && rm -rf /var/lib/apt/lists/*
+
+#end added by Kaizen
+ 
 ENV P4PORT=ssl:1666
 ENV P4USER=p4admin
 ENV P4PASSWD=P@ssw0rd

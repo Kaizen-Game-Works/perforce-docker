@@ -1,0 +1,65 @@
+# Remember to setup a .env alongside this file
+# that provides the values for P4_USERNAME 
+# and others. Look at the sample.env to get started
+
+
+version: '2.1'
+services:
+  p4d:
+    #image: hawkmothstudio/helix-p4d
+    image: kaizengameworks/helix-p4d
+    build: helix-p4d
+    container_name: ${P4D_DOCKER_INSTANCE}
+    ports:
+      - '1666:1666'
+    restart: unless-stopped
+    environment:
+      P4NAME: master
+      P4ROOT: /data/master
+      P4SSLDIR: /data/master/root/ssl
+      P4USER: ${P4_USERNAME}
+      P4PASSWD: ${P4_PASSWORD}
+      P4D_USE_UNICODE: 'true'
+      P4D_LOAD_TYPEMAPS: 'true'
+      P4D_LOAD_USERS: 'false'
+      P4D_LOAD_USER_PASSWORDS: 'false'
+      P4D_LOAD_GROUPS: 'false'
+      P4D_LOAD_DEPOTS: 'false'
+      P4D_LOAD_PROTECTIONS: 'false'
+      SWARM_URL: 'http://swarm:80'
+      INSTALL_SWARM_TRIGGER: 'true'
+      SWARM_TRIGGER_HOST: 'http://swarm:80'
+      SWARM_TRIGGER_TOKEN: ${SWARM_TRIGGER_TOKEN}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/letsencrypt:/etc/letsecnrypt:ro
+      - /data/docker_volumes/perforce/data:/data
+      - /data/docker_volumes/perforce/typemap:/p4-typemap
+      - /srv/docker-secrets/perforce:/secrets:ro
+  swarm:
+    #image: hawkmothstudio/helix-swarm
+    image: kaizengameworks/helix-swarm
+    build: helix-swarm
+    container_name: ${SWARM_DOCKER_INSTANCE}
+    ports:
+      - '1667:80'
+    environment:
+      P4PORT: 'ssl:p4d:1666'
+      P4USER: ${P4_USERNAME}
+      P4PASSWD: ${P4_PASSWORD}
+      P4D_USE_UNICODE: 'true'
+      SWARM_USER: ${SWARM_USER_NAME}
+      SWARM_PASSWD: ${SWARM_PASSWORD}
+      SWARM_USER_CREATE: 'false'
+      SWARM_GROUP_CREATE: 'false'
+      SWARM_HOST: 'localhost'
+      SWARM_PORT: '80'
+      SWARM_TRIGGER_TOKEN: ${SWARM_TRIGGER_TOKEN}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/letsencrypt:/etc/letsecnrypt:ro
+      - /data/docker_volumes/swarm/data:/opt/perforce/swarm/data
+    depends_on:
+      - p4d

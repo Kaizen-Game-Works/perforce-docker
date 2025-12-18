@@ -2,3 +2,7 @@
 *.iml
 *.ipr
 *.iws
+.env
+.DS_STORE
+ssh_key
+.ssh

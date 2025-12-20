@@ -176,7 +176,18 @@ The first thing we need to do is build the images. You need to build because we 
 ```
 ./build.sh
 ```
-The building may take a while, so be patient.
+The building may take a while, so be patient. If it fails, you might need to run it without the namespace mapping. In which case:
+
+```
+sudo nano /etc/docker/daemon.json
+```
+Clear the file, then restart the docker service, and build again
+```
+sudo systemctl restart docker
+./build.sh
+```
+And finally, rebuild the daemon.json (see proper contents above), then restart the docker container again
+
 
 Once it's done, bring up the docker container
 ```

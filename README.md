@@ -104,7 +104,7 @@ and adding the following
 ```
 And now change the UID of the docker-user-remap user, and the dockervolumes groups to match what's used within the container
 ```
-sudo usermod -u 1101 perforce
+sudo usermod -u 1101 docker-user-remap
 sudo groupmod -g 1102 dockervolumes
 ```
 

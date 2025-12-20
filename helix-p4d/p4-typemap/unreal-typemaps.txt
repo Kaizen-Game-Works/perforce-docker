@@ -1,66 +1,80 @@
-    # configuration files
-    text        //depot/....cnf
-    text        //depot/....config
-    text        //depot/....ini
+text        //depot/....cnf
+text        //depot/....config
+text        //depot/....ini
 
-    # source code
-    text+w      //depot/....modules
-    text        //depot/....c
-    text        //depot/....cpp
-    text        //depot/....cs
-    text        //depot/....h
-    text        //depot/....inc
-    text        //depot/....m
-    text        //depot/....mm
-    text        //depot/....py
+text+w      //depot/....modules
+text        //depot/....c
+text        //depot/....cpp
+text        //depot/....cs
+text        //depot/....h
+text        //depot/....inc
+text        //depot/....m
+text        //depot/....mm
+text        //depot/....py
 
-    # Unreal Engine assets
-    binary+l    //depot/....uasset
-    binary+l    //depot/....umap
-    binary+l    //depot/....upk
-    binary+l    //depot/....udk
-    binary+l    //depot/....ubulk
-    binary+lS2  //depot/..._BuiltData.uasset
-    binary+lS1  //depot/..._HLOD.uasset
-    binary+wS1  //depot/....pdb
-    binary+lS2  //..._BuiltData.uasset
-    binary+lS1  //..._HLOD.uasset
+binary+l    //depot/....uasset
+binary+l    //depot/....umap
+binary+l    //depot/....upk
+binary+l    //depot/....udk
+binary+l    //depot/....ubulk
+binary+lS2  //depot/..._BuiltData.uasset
+binary+lS1  //depot/..._HLOD.uasset
+binary+wS1  //depot/....pdb
 
-    # build output
-    binary+w    //depot/....app
-    binary+w    //depot/....dll
-    binary+w    //depot/....dylib
-    binary+w    //depot/....exe
-    binary+w    //depot/....ipa
-    binary+w    //depot/....lib
-    text+w      //depot/....log
-    binary+w    //depot/....pdb
-    binary+w    //depot/....so
-    binary+w    //depot/....stub
+binary+w    //depot/....app
+binary+w    //depot/....dll
+binary+w    //depot/....dylib
+binary+w    //depot/....exe
+binary+w    //depot/....ipa
+binary+w    //depot/....lib
+text+w      //depot/....log
+binary+w    //depot/....pdb
+binary+w    //depot/....so
+binary+w    //depot/....stub
 
-    # legacy
-    binary+w //....exe
-    binary+wS2 //....dll
-    binary+w //....lib
-    binary+w //....app
-    binary+w //....dylib
-    binary+w //....stub
-    binary+w //....ipa
-    binary //....bmp
-    text //....ini
-    text //....config
-    text //....cpp
-    text //....h
-    text //....c
-    text //....cs
-    text //....m
-    text //....mm
-    text //....py
-    text //....js
-    binary+wS1  //....pdb
-    text+w //....modules
-    binary+l    //....uasset
-    binary+l    //....umap
-    binary+l    //....upk
-    binary+l    //....udk
+binary+w    //....app
+binary+w    //....dll
+binary+w    //....dylib
+binary+w    //....exe
+binary+w    //....ipa
+binary+w    //....lib
+text+w      //....log
+binary+w    //....pdb
+binary+w    //....so
+binary+w    //....stub
+
+binary	//....bmp
+binary	//....jpg
+binary	//....jpeg
+binary	//....png
+binary	//....gif
+binary	//....webp
+binary	//....ai
+binary	//....psd
+
+text	//....ini
+text	//....cnf
+text	//....config
+text	//....cpp
+text	//....h
+text	//....c
+text	//....cpp
+text	//....cs
+text	//....inc
+text	//....m
+text	//....mm
+text	//....py
+text	//....js
+text	//....txt
+binary+wS1	//....pdb
+text+w	//....modules
+
+binary+l	//....uasset
+binary+l	//....umap
+binary+l	//....upk
+binary+l	//....udk
+binary+lS2	//..._BuiltData.uasset
+binary+lS1	//..._HLOD.uasset
+binary+wS1	//....pdb
+binary+lS1	//..._miphelper_*.uasset
     

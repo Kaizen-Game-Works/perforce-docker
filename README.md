@@ -186,8 +186,24 @@ Clear the file, then restart the docker service, and build again
 sudo systemctl restart docker
 ./build.sh
 ```
-And finally, rebuild the daemon.json (see proper contents above), then restart the docker container again
 
+Once that's built, you then need to save the image so we can use it against docker running with namespaces
+
+```
+docker save kaizengameworks/helix-p4d:latest kaizengameworks/helix-swarm:latest | gzip > /somedir/helix-images.tar.gz
+```
+Now rebuild the daemon.json (see proper contents above), then restart the docker container again.
+
+Once the docker service is restarted, you need to load the images
+
+```
+gunzip -c helix-images.tar.gz | docker load
+```
+
+And verify the images have been loaded
+```
+docker image ls
+```
 
 Once it's done, bring up the docker container
 ```

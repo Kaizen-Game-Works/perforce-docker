@@ -210,6 +210,12 @@ Once it's done, bring up the docker container
 docker compose up -d
 ```
 
+If you see permissions issues (easier to see if you omit the -d flag), then stop the docker container and reset the ownership on the data folder
+```
+docker stop perforce-p4d-1
+sudo chown -R docker-user-remap:dockervolumes /data/docker_volumes/perforce/data
+```
+
 Test it all works. Note that the details on first startup might be set as the below if you've not created any users as part of the setup. Also note that swarm might not work at this point if you've not setup users, that's OK, we'll fix that in a moment.
 ```
 p4user
